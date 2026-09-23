@@ -31,6 +31,30 @@ Invoke-RestMethod http://localhost:8000/health
 Invoke-RestMethod http://localhost:8000/ready
 ```
 
+## Register a user
+
+The current M1 backend slice supports user registration. Passwords must contain
+between 15 and 128 characters; Unicode, whitespace, and passphrases are
+accepted, and no composition rules are imposed. Only ARS and USD are supported
+as reference currencies, with ARS as the default.
+
+```powershell
+$body = @{
+    email = "learner@example.com"
+    password = "synthetic passphrase 2026"
+    reference_currency = "ARS"
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+    -Method Post `
+    -Uri http://127.0.0.1:8000/api/v1/auth/register `
+    -ContentType "application/json" `
+    -Body $body
+```
+
+The response contains public user data only. It never contains the password or
+password hash. Login and authenticated sessions are not implemented yet.
+
 Inspect logs or stop the stack:
 
 ```powershell

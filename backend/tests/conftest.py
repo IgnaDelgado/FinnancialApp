@@ -12,7 +12,10 @@ def database_session() -> Iterator[Session]:
 
     with get_engine().connect() as connection:
         transaction = connection.begin()
-        session = Session(bind=connection)
+        session = Session(
+            bind=connection,
+            join_transaction_mode="create_savepoint",
+        )
 
         try:
             yield session
