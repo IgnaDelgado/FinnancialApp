@@ -53,7 +53,32 @@ Invoke-RestMethod `
 ```
 
 The response contains public user data only. It never contains the password or
-password hash. Login and authenticated sessions are not implemented yet.
+password hash.
+
+Log in to receive a bearer token:
+
+```powershell
+$loginBody = @{
+    email = "learner@example.com"
+    password = "synthetic passphrase 2026"
+} | ConvertTo-Json
+
+$login = Invoke-RestMethod `
+    -Method Post `
+    -Uri http://127.0.0.1:8000/api/v1/auth/login `
+    -ContentType "application/json" `
+    -Body $loginBody
+
+$headers = @{ Authorization = "Bearer $($login.access_token)" }
+Invoke-RestMethod http://127.0.0.1:8000/api/v1/auth/me -Headers $headers
+Invoke-RestMethod `
+    -Method Post `
+    -Uri http://127.0.0.1:8000/api/v1/auth/logout `
+    -Headers $headers
+```
+
+The raw bearer token is returned only by login. PostgreSQL stores its SHA-256
+hash, and logout revokes the server-side session immediately.
 
 Inspect logs or stop the stack:
 
@@ -106,6 +131,7 @@ uv run alembic upgrade head
 | Variable | Purpose |
 | --- | --- |
 | `APP_ENVIRONMENT` | Selects `development`, `test`, or `production`. |
+| `SESSION_LIFETIME_DAYS` | Sets server-side session lifetime; defaults to 30 days. |
 | `POSTGRES_DB` | Creates the local Compose database. |
 | `POSTGRES_USER` | Creates the local Compose database user. |
 | `POSTGRES_PASSWORD` | Sets the local Compose database password. |

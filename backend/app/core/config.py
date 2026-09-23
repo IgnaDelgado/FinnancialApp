@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     app_environment: Literal["development", "test", "production"] = "development"
     database_url: str = Field(min_length=1)
+    session_lifetime_days: int = Field(default=30, ge=1, le=365)
 
 
 @lru_cache
