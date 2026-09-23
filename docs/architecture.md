@@ -109,7 +109,12 @@ A service gathers confirmed received income, paid commitments, aggregate flexibl
 
 Passwords require an appropriate secure hashing algorithm. Every user-resource operation validates ownership. External input is untrusted. Credentials, tokens, complete sensitive records, and bank or broker credentials must not be logged or committed. Production uses managed secret storage. Data export and deletion must exist before public launch.
 
-The authentication mechanism, password-hashing choice, session lifetime, recovery flow, authorization implementation, retention policy, and audit requirements are **Pending decision**.
+The MVP uses normalized email identifiers, Argon2id password hashes, and
+revocable opaque sessions whose token hashes are stored in PostgreSQL. Sessions
+expire after 30 days. The raw session token is returned only at login and will
+later be kept in platform secure storage by the mobile client. These choices
+are recorded in `docs/decisions/0001-authentication.md`. Recovery flow,
+retention policy, and detailed audit requirements remain **Pending decision**.
 
 ## Currency and Calculation Boundaries
 

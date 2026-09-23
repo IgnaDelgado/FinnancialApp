@@ -35,7 +35,12 @@ It does this by separating actual data, allocations, forecasts, and assumptions;
 
 ### Users and authentication
 
-Users can register, log in, log out, and select ARS or USD as their reference currency. ARS is the default. Passwords are stored securely, and every user-owned resource is isolated from other users. Social login, multi-factor authentication, and the exact account-recovery flow are outside the initial requirement or **Pending decision**.
+Users register with a normalized email address, log in and out through a
+revocable server-side session, and select ARS or USD as their reference
+currency. ARS is the default. Passwords are hashed with Argon2id, and every
+user-owned resource is isolated from other users. Social login,
+multi-factor authentication, and the exact account-recovery flow are outside
+the initial requirement or **Pending decision**.
 
 ### Financial accounts
 

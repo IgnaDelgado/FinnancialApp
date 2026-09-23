@@ -6,6 +6,11 @@ This roadmap delivers the smallest verifiable planning capability first. Financi
 
 Items under Post-MVP are not part of the initial release. A milestone may not claim completion while a required financial rule remains **Pending decision**.
 
+Delivery is backend-first. Backend sub-milestones may be implemented through
+the core planning capabilities before mobile work begins. This sequencing does
+not remove mobile acceptance criteria: an MVP milestone is complete only after
+both its backend behavior and required mobile interface are delivered.
+
 ## MVP Milestones
 
 ### M0 — Financial rules and repository foundation
@@ -40,7 +45,9 @@ Implement registration, login, logout, secure password storage, reference-curren
 - Reference currency supports ARS and USD, defaults to ARS, and is retained for each user.
 - The mobile app provides working registration, login, logout, and reference-currency selection screens.
 
-Authentication identifier, recovery flow, session mechanism, and password-hashing implementation are **Pending decision**.
+The authentication identifier, session mechanism, and password-hashing
+implementation are defined in `docs/decisions/0001-authentication.md`. Account
+recovery remains **Pending decision** and is not required for the initial MVP.
 
 ### M2 — Accounts and current balances
 

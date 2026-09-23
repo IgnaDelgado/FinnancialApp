@@ -30,7 +30,7 @@ jobs:
           --health-retries 10
     env:
       APP_ENVIRONMENT: test
-      DATABASE_URL: postgresql+psycopg://financial_plan:synthetic_ci_password@localhost:5432/financial_plan_test
+      DATABASE_URL: postgresql+psycopg://financial_plan:synthetic_ci_password@127.0.0.1:5432/financial_plan_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -41,8 +41,10 @@ jobs:
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
       - run: uv sync --locked --all-groups
+      - run: uv run alembic upgrade head
       - run: uv run pytest --cov=app --cov-report=term-missing
       - run: uv run ruff format --check .
       - run: uv run ruff check .
       - run: uv run mypy .
-      - run: uv run alembic current
+      - run: uv run alembic current --check-heads
+      - run: uv run alembic check

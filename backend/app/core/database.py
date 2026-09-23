@@ -1,9 +1,10 @@
-from sqlalchemy import MetaData, create_engine, text
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 
 from app.core.config import get_settings
+from app.models import Base
 
-metadata = MetaData()
+metadata = Base.metadata
 _engine: Engine | None = None
 
 

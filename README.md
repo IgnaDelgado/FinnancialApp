@@ -48,7 +48,7 @@ database URL for the Compose PostgreSQL port:
 
 ```powershell
 uv sync --locked --all-groups
-$env:DATABASE_URL = "postgresql+psycopg://financial_plan:replace_with_a_local_password@localhost:5432/financial_plan"
+$env:DATABASE_URL = "postgresql+psycopg://financial_plan:replace_with_a_local_password@127.0.0.1:5432/financial_plan"
 $env:APP_ENVIRONMENT = "development"
 ```
 
@@ -61,11 +61,13 @@ uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 Run every backend verification command:
 
 ```powershell
+uv run alembic upgrade head
 uv run pytest --cov=app --cov-report=term-missing
 uv run ruff format --check .
 uv run ruff check .
 uv run mypy .
-uv run alembic current
+uv run alembic current --check-heads
+uv run alembic check
 ```
 
 Create a migration after adding SQLAlchemy models in a later milestone:
