@@ -87,14 +87,10 @@ def read_current_user(
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout_user(
     request: RefreshTokenRequest,
-    current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[Session, Depends(get_database_session)],
 ) -> Response:
     try:
-        AuthenticationService(session).logout(
-            user_id=current_user.id,
-            refresh_token=request.refresh_token,
-        )
+        AuthenticationService(session).logout(request.refresh_token)
     except InvalidRefreshTokenError as exc:
         raise _invalid_refresh_error() from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)

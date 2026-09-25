@@ -192,7 +192,7 @@ def test_logout_revokes_only_supplied_device_and_logout_all_revokes_every_device
     first = service.login(email=user.email, password=PASSWORD)
     second = service.login(email=user.email, password=PASSWORD)
 
-    service.logout(user_id=user.id, refresh_token=first.refresh_token)
+    service.logout(first.refresh_token)
     with pytest.raises(InvalidRefreshTokenError):
         service.refresh(first.refresh_token)
     second_rotated = service.refresh(second.refresh_token)

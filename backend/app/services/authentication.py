@@ -150,16 +150,12 @@ class AuthenticationService:
             absolute_expires_at=current.absolute_expires_at,
         )
 
-    def logout(self, *, user_id: UUID, refresh_token: str) -> None:
+    def logout(self, refresh_token: str) -> None:
         now = self._now_provider()
         current = self._user_sessions.get_by_token_hash_for_update(
             hash_refresh_token(refresh_token)
         )
-        if (
-            current is None
-            or current.user_id != user_id
-            or current.revoked_at is not None
-        ):
+        if current is None or current.revoked_at is not None:
             self._session.rollback()
             raise InvalidRefreshTokenError
         current.revoked_at = now

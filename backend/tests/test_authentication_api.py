@@ -129,7 +129,6 @@ def test_logout_revokes_one_device_without_affecting_another(
     ).json()
     logout = api_client.post(
         "/api/v1/auth/logout",
-        headers=bearer(first["access_token"]),
         json={"refresh_token": first["refresh_token"]},
     )
 
