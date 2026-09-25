@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted for the MVP backend.
+Superseded by [ADR 0002](0002-jwt-refresh-sessions.md).
 
 ## Context
 

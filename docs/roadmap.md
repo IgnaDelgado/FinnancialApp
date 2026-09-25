@@ -45,8 +45,9 @@ Implement registration, login, logout, secure password storage, reference-curren
 - Reference currency supports ARS and USD, defaults to ARS, and is retained for each user.
 - The mobile app provides working registration, login, logout, and reference-currency selection screens.
 
-The authentication identifier, session mechanism, and password-hashing
-implementation are defined in `docs/decisions/0001-authentication.md`. Account
+The current authentication identifier, session mechanism, and password-hashing
+implementation are defined in `docs/decisions/0002-jwt-refresh-sessions.md`;
+ADR 0001 preserves the superseded initial design. Account
 recovery remains **Pending decision** and is not required for the initial MVP.
 
 ### M2 — Accounts and current balances

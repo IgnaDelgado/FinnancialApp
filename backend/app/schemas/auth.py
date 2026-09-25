@@ -41,7 +41,14 @@ class UserLoginRequest(BaseModel):
         return value
 
 
-class SessionTokenResponse(BaseModel):
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str = Field(min_length=43, max_length=512)
+
+
+class TokenPairResponse(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: Literal["bearer"] = "bearer"
-    expires_at: datetime
+    access_expires_at: datetime
+    refresh_expires_at: datetime
+    absolute_expires_at: datetime

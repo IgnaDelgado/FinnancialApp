@@ -74,11 +74,14 @@ Invoke-RestMethod http://127.0.0.1:8000/api/v1/auth/me -Headers $headers
 Invoke-RestMethod `
     -Method Post `
     -Uri http://127.0.0.1:8000/api/v1/auth/logout `
-    -Headers $headers
+    -Headers $headers `
+    -ContentType "application/json" `
+    -Body (@{ refresh_token = $login.refresh_token } | ConvertTo-Json)
 ```
 
-The raw bearer token is returned only by login. PostgreSQL stores its SHA-256
-hash, and logout revokes the server-side session immediately.
+The access JWT expires after 15 minutes. The independent refresh token rotates
+on use; PostgreSQL stores only its SHA-256 hash. Logout revokes that refresh
+session, while the already-issued access JWT remains usable until it expires.
 
 Inspect logs or stop the stack:
 
@@ -99,6 +102,7 @@ database URL for the Compose PostgreSQL port:
 uv sync --locked --all-groups
 $env:DATABASE_URL = "postgresql+psycopg://financial_plan:replace_with_a_local_password@127.0.0.1:5432/financial_plan"
 $env:APP_ENVIRONMENT = "development"
+$env:JWT_SECRET_KEY = "replace_with_at_least_32_random_characters"
 ```
 
 Run the API during development:
@@ -131,7 +135,11 @@ uv run alembic upgrade head
 | Variable | Purpose |
 | --- | --- |
 | `APP_ENVIRONMENT` | Selects `development`, `test`, or `production`. |
-| `SESSION_LIFETIME_DAYS` | Sets server-side session lifetime; defaults to 30 days. |
+| `JWT_SECRET_KEY` | Signs access JWTs; required and at least 32 characters. |
+| `JWT_ALGORITHM` | Access-token signature algorithm; fixed to `HS256`. |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access JWT lifetime; defaults to 15 minutes. |
+| `REFRESH_TOKEN_EXPIRE_DAYS` | Sliding refresh lifetime; defaults to 20 days. |
+| `SESSION_ABSOLUTE_EXPIRE_DAYS` | Maximum family lifetime; defaults to 90 days. |
 | `POSTGRES_DB` | Creates the local Compose database. |
 | `POSTGRES_USER` | Creates the local Compose database user. |
 | `POSTGRES_PASSWORD` | Sets the local Compose database password. |

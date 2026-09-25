@@ -109,11 +109,13 @@ A service gathers confirmed received income, paid commitments, aggregate flexibl
 
 Passwords require an appropriate secure hashing algorithm. Every user-resource operation validates ownership. External input is untrusted. Credentials, tokens, complete sensitive records, and bank or broker credentials must not be logged or committed. Production uses managed secret storage. Data export and deletion must exist before public launch.
 
-The MVP uses normalized email identifiers, Argon2id password hashes, and
-revocable opaque sessions whose token hashes are stored in PostgreSQL. Sessions
-expire after 30 days. The raw session token is returned only at login and will
-later be kept in platform secure storage by the mobile client. These choices
-are recorded in `docs/decisions/0001-authentication.md`. Recovery flow,
+The MVP uses normalized email identifiers and Argon2id password hashes. Normal
+requests use locally verified HS256 access JWTs that expire after 15 minutes.
+Random refresh tokens rotate on every use, slide for up to 20 days, and belong
+to a device-session family that expires absolutely after 90 days. PostgreSQL
+stores only SHA-256 refresh-token hashes. Logout revokes one refresh session;
+logout-all revokes every family for the user. These choices and reuse detection
+are recorded in `docs/decisions/0002-jwt-refresh-sessions.md`. Recovery flow,
 retention policy, and detailed audit requirements remain **Pending decision**.
 
 ## Currency and Calculation Boundaries

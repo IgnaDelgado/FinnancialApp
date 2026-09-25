@@ -6,10 +6,11 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.database import get_engine
+from app.core.security import InvalidAccessTokenError
+from app.models.user import User
 from app.services.authentication import (
-    AuthenticatedSession,
     AuthenticationService,
-    InvalidSessionError,
+    InvalidCredentialsError,
 )
 
 _bearer_scheme = HTTPBearer(auto_error=False)
@@ -22,19 +23,21 @@ def get_database_session() -> Iterator[Session]:
         yield session
 
 
-def get_authenticated_session(
+def get_current_user(
     credentials: Annotated[
         HTTPAuthorizationCredentials | None,
         Depends(_bearer_scheme),
     ],
     session: Annotated[Session, Depends(get_database_session)],
-) -> AuthenticatedSession:
+) -> User:
     if credentials is None:
         raise _unauthorized_error()
 
     try:
-        return AuthenticationService(session).authenticate(credentials.credentials)
-    except InvalidSessionError as exc:
+        return AuthenticationService(session).authenticate_access_token(
+            credentials.credentials
+        )
+    except (InvalidAccessTokenError, InvalidCredentialsError) as exc:
         raise _unauthorized_error() from exc
 
 

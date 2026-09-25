@@ -1,12 +1,18 @@
+import os
 from collections.abc import Iterator
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_database_session
-from app.core.database import get_engine
-from app.main import app
+os.environ.setdefault(
+    "JWT_SECRET_KEY",
+    "synthetic-test-secret-key-with-more-than-32-characters",
+)
+
+from app.api.dependencies import get_database_session  # noqa: E402
+from app.core.database import get_engine  # noqa: E402
+from app.main import app  # noqa: E402
 
 
 @pytest.fixture
