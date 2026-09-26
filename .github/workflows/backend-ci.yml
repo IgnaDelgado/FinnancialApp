@@ -31,6 +31,7 @@ jobs:
     env:
       APP_ENVIRONMENT: test
       DATABASE_URL: postgresql+psycopg://financial_plan:synthetic_ci_password@127.0.0.1:5432/financial_plan_test
+      JWT_SECRET_KEY: synthetic_ci_jwt_secret_with_32_characters
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
