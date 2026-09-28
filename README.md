@@ -1,15 +1,16 @@
 # Financial Plan
 
-Mobile-first personal finance planning application. The backend currently
-provides the FastAPI and PostgreSQL foundation, user registration, JWT access
-tokens, rotating refresh-token sessions, and logout. The minimal mobile client
-required to complete milestone M1 has not yet been implemented.
+Mobile-first personal finance planning application. The current authentication
+slice includes the FastAPI and PostgreSQL backend plus an Expo/React Native
+client for registration, login, session restoration, refresh-token rotation,
+profile display, and logout.
 
 ## Prerequisites
 
 - Docker with Docker Compose
 - Python 3.12
 - [uv](https://docs.astral.sh/uv/)
+- Node.js 24 and npm (mobile client)
 
 ## Run with Docker Compose
 
@@ -147,6 +148,13 @@ uv run alembic upgrade head
 | `DATABASE_URL` | SQLAlchemy Psycopg URL injected by Compose or set for host commands. |
 
 Never commit `.env`; only `.env.example` belongs in version control.
+
+## Run the mobile client
+
+Start the backend first. Then follow the setup, API-address, and verification
+instructions in [`mobile/README.md`](mobile/README.md). The complete guided
+walkthrough lives in
+[`docs/mobile-authentication-course.md`](docs/mobile-authentication-course.md).
 
 `POSTGRES_PASSWORD` initializes a new PostgreSQL volume; changing the variable
 does not update the password stored in an existing volume. Preserve volumes

@@ -146,4 +146,4 @@ No provider or protocol is selected. An integration requires legal, commercial, 
 
 ## Architecture Decisions Still Pending
 
-Material decisions should be recorded under `docs/decisions/` when they are made. Remaining topics include authentication, package boundaries, API conventions, mobile state and security, detailed persistence behavior, deployment, observability, backup, retention, and integration providers. None blocks creating the initial repository scaffold.
+Material decisions should be recorded under `docs/decisions/` when they are made. Authentication and mobile session handling are defined in ADRs 0002 and 0003. Remaining topics include package boundaries, API conventions beyond authentication, detailed persistence behavior, deployment, observability, backup, retention, and integration providers.
