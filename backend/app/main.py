@@ -1,0 +1,19 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+
+from app.api.auth import router as auth_router
+from app.api.health import router as health_router
+from app.core.database import dispose_database_engine
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    yield
+    dispose_database_engine()
+
+
+app = FastAPI(title="Financial Plan API", lifespan=lifespan)
+app.include_router(health_router)
+app.include_router(auth_router)
