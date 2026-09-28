@@ -33,11 +33,11 @@ jobs:
       DATABASE_URL: postgresql+psycopg://financial_plan:synthetic_ci_password@127.0.0.1:5432/financial_plan_test
       JWT_SECRET_KEY: synthetic_ci_jwt_secret_with_32_characters
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
