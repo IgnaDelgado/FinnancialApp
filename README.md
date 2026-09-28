@@ -1,8 +1,9 @@
 # Financial Plan
 
-Mobile-first personal finance planning application. Milestone M0-A provides the
-FastAPI and PostgreSQL development foundation only; it does not yet include
-authentication, financial models, or a mobile client.
+Mobile-first personal finance planning application. The backend currently
+provides the FastAPI and PostgreSQL foundation, user registration, JWT access
+tokens, rotating refresh-token sessions, and logout. The minimal mobile client
+required to complete milestone M1 has not yet been implemented.
 
 ## Prerequisites
 
