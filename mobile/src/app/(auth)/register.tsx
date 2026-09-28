@@ -43,13 +43,13 @@ export default function RegisterScreen() {
 
   return (
     <AuthShell
-      eyebrow="UN PUNTO DE PARTIDA CLARO"
-      subtitle="Elegí tu moneda de referencia. Cada monto seguirá conservando siempre su moneda real."
-      title={'Creá tu espacio\nfinanciero.'}
+      eyebrow="EMPECEMOS JUNTOS"
+      subtitle="Crear tu espacio lleva menos de un minuto. Después vamos paso a paso."
+      title={'Tu futuro empieza\ncon un pequeño paso.'}
     >
       <View style={styles.heading}>
-        <Text style={styles.formTitle}>Datos de acceso</Text>
-        <Text style={styles.formSubtitle}>Te llevará menos de un minuto.</Text>
+        <Text style={styles.formTitle}>Creá tu cuenta</Text>
+        <Text style={styles.formSubtitle}>Primero, contanos cómo querés ingresar.</Text>
       </View>
 
       <View style={styles.fields}>
@@ -91,8 +91,8 @@ export default function RegisterScreen() {
         />
       </View>
 
-      <Text style={styles.currencyLabel}>Moneda de referencia</Text>
-      <Text style={styles.currencyHelp}>Se usará para resumir tu plan, nunca para mezclar monedas sin una cotización.</Text>
+      <Text style={styles.currencyLabel}>¿Con qué moneda pensás tu día a día?</Text>
+      <Text style={styles.currencyHelp}>Es solo tu referencia principal. Nunca mezclaremos monedas sin avisarte.</Text>
       <View accessibilityRole="radiogroup" style={styles.currencyRow}>
         {(['ARS', 'USD'] as const).map((option) => {
           const selected = currency === option;
@@ -133,29 +133,30 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  heading: { gap: 4 },
-  formTitle: { color: colors.ink, fontFamily: fontFamily.displayMedium, fontSize: 25 },
-  formSubtitle: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 14 },
+  heading: { gap: 5 },
+  formTitle: { color: colors.ink, fontFamily: fontFamily.displayMedium, fontSize: 23, letterSpacing: -0.35 },
+  formSubtitle: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 13 },
   fields: { gap: 15, marginTop: 22 },
-  currencyLabel: { color: colors.ink, fontFamily: fontFamily.semibold, fontSize: 13, marginTop: 20 },
+  currencyLabel: { color: colors.slate, fontFamily: fontFamily.semibold, fontSize: 12.5, marginTop: 20 },
   currencyHelp: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 11, lineHeight: 16, marginTop: 4 },
-  currencyRow: { gap: 9, marginBottom: 18, marginTop: 10 },
+  currencyRow: { flexDirection: 'row', gap: 9, marginBottom: 19, marginTop: 10 },
   currencyOption: {
     alignItems: 'center',
     backgroundColor: colors.field,
     borderColor: colors.line,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
+    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     minHeight: 58,
-    paddingHorizontal: 15,
+    paddingHorizontal: 13,
   },
-  currencySelected: { backgroundColor: colors.softMint, borderColor: '#A7BE70' },
+  currencySelected: { backgroundColor: colors.softMint, borderColor: colors.mint },
   currencyCode: { color: colors.muted, fontFamily: fontFamily.bold, fontSize: 14 },
   currencyCodeSelected: { color: colors.forest },
   currencyName: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 10, marginTop: 2 },
-  switchRow: { alignItems: 'center', flexDirection: 'row', gap: 5, justifyContent: 'center', marginTop: 20 },
+  switchRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 5, justifyContent: 'center', marginTop: 21 },
   switchCopy: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 13 },
   switchLink: { color: colors.green, fontFamily: fontFamily.bold, fontSize: 13 },
 });

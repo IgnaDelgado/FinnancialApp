@@ -1,5 +1,5 @@
 import { Eye, EyeOff } from 'lucide-react-native';
-import type { ComponentProps, ReactNode } from 'react';
+import { useState, type ComponentProps, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { colors, fontFamily } from '@/theme';
@@ -20,14 +20,24 @@ export function FormField({
   showSecret?: boolean;
   onToggleSecret?: () => void;
 }) {
+  const [focused, setFocused] = useState(false);
+
   return (
     <View style={styles.block}>
       <Text style={styles.label}>{label}</Text>
-      <View style={styles.inputShell}>
+      <View style={[styles.inputShell, focused && styles.inputFocused]}>
         {icon}
         <TextInput
           {...inputProps}
-          placeholderTextColor="#99A29C"
+          onBlur={(event) => {
+            setFocused(false);
+            inputProps.onBlur?.(event);
+          }}
+          onFocus={(event) => {
+            setFocused(true);
+            inputProps.onFocus?.(event);
+          }}
+          placeholderTextColor="#A2AAA7"
           secureTextEntry={secure && !showSecret}
           style={styles.input}
         />
@@ -46,18 +56,27 @@ export function FormField({
 }
 
 const styles = StyleSheet.create({
-  block: { gap: 8 },
-  label: { color: colors.ink, fontFamily: fontFamily.semibold, fontSize: 13 },
+  block: { gap: 7 },
+  label: { color: colors.slate, fontFamily: fontFamily.semibold, fontSize: 12.5, marginLeft: 2 },
   inputShell: {
     alignItems: 'center',
     backgroundColor: colors.field,
     borderColor: colors.line,
-    borderRadius: 14,
+    borderRadius: 17,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 11,
-    minHeight: 56,
-    paddingHorizontal: 15,
+    minHeight: 58,
+    paddingHorizontal: 16,
+  },
+  inputFocused: {
+    backgroundColor: colors.white,
+    borderColor: colors.mint,
+    borderWidth: 1.5,
+    shadowColor: colors.mint,
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
   },
   input: {
     color: colors.ink,

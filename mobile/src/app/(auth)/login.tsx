@@ -36,13 +36,13 @@ export default function LoginScreen() {
 
   return (
     <AuthShell
-      eyebrow="TU PLAN EMPIEZA ACÁ"
-      subtitle="Volvé a ver cuánto podés usar hoy y cómo avanzan tus objetivos."
-      title={'Tu dinero,\ncon un plan.'}
+      eyebrow="VOLVÉ A TU PLAN"
+      subtitle="Tus objetivos y decisiones, ordenados en un solo lugar y sin complicaciones."
+      title={'Qué bueno\nverte de nuevo.'}
     >
       <View style={styles.heading}>
-        <Text style={styles.formTitle}>Bienvenido de nuevo</Text>
-        <Text style={styles.formSubtitle}>Ingresá con el correo de tu cuenta.</Text>
+        <Text style={styles.formTitle}>Entrá a tu espacio</Text>
+        <Text style={styles.formSubtitle}>Usá el correo con el que creaste tu cuenta.</Text>
       </View>
 
       <View style={styles.fields}>
@@ -87,7 +87,7 @@ export default function LoginScreen() {
 
       <PrimaryButton
         disabled={!canSubmit}
-        label="Entrar a mi espacio"
+        label="Continuar"
         loading={submitting}
         onPress={() => void handleSubmit()}
       />
@@ -110,24 +110,24 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  heading: { gap: 4 },
-  formTitle: { color: colors.ink, fontFamily: fontFamily.displayMedium, fontSize: 25 },
-  formSubtitle: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 14, lineHeight: 20 },
-  fields: { gap: 16, marginBottom: 18, marginTop: 23 },
+  heading: { gap: 5 },
+  formTitle: { color: colors.ink, fontFamily: fontFamily.displayMedium, fontSize: 23, letterSpacing: -0.35 },
+  formSubtitle: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 13, lineHeight: 19 },
+  fields: { gap: 15, marginBottom: 19, marginTop: 22 },
   restoreBox: { gap: 7 },
   retryButton: { alignItems: 'center', alignSelf: 'flex-start', flexDirection: 'row', gap: 7, paddingVertical: 4 },
   retryText: { color: colors.green, fontFamily: fontFamily.bold, fontSize: 12 },
-  switchRow: { alignItems: 'center', flexDirection: 'row', gap: 5, justifyContent: 'center', marginTop: 20 },
+  switchRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 5, justifyContent: 'center', marginTop: 21 },
   switchCopy: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 13 },
   switchLink: { color: colors.green, fontFamily: fontFamily.bold, fontSize: 13 },
   securityNote: {
     alignItems: 'flex-start',
-    borderTopColor: colors.line,
-    borderTopWidth: 1,
+    backgroundColor: colors.paleGreen,
+    borderRadius: 16,
     flexDirection: 'row',
     gap: 9,
-    marginTop: 24,
-    paddingTop: 18,
+    marginTop: 20,
+    padding: 13,
   },
-  securityCopy: { color: colors.muted, flex: 1, fontFamily: fontFamily.body, fontSize: 11, lineHeight: 17 },
+  securityCopy: { color: colors.green, flex: 1, fontFamily: fontFamily.medium, fontSize: 10.5, lineHeight: 16 },
 });

@@ -1,5 +1,7 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowRight } from 'lucide-react-native';
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import { useMemo } from 'react';
+import { ActivityIndicator, Animated, Pressable, StyleSheet, Text } from 'react-native';
 
 import { colors, fontFamily } from '@/theme';
 
@@ -14,38 +16,63 @@ export function PrimaryButton({
   loading?: boolean;
   onPress: () => void;
 }) {
+  const scale = useMemo(() => new Animated.Value(1), []);
+  const unavailable = disabled || loading;
+  const contentColor = unavailable ? colors.green : colors.white;
+
+  function animate(toValue: number) {
+    Animated.spring(scale, {
+      damping: 16,
+      mass: 0.6,
+      stiffness: 260,
+      toValue,
+      useNativeDriver: true,
+    }).start();
+  }
+
   return (
-    <Pressable
-      accessibilityRole="button"
-      disabled={disabled || loading}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.button,
-        pressed && styles.pressed,
-        (disabled || loading) && styles.disabled,
-      ]}
-    >
-      <Text style={styles.label}>{label}</Text>
-      {loading ? (
-        <ActivityIndicator color={colors.forestDeep} />
-      ) : (
-        <ArrowRight color={colors.forestDeep} size={20} strokeWidth={2.2} />
-      )}
-    </Pressable>
+    <Animated.View style={[styles.shadow, { transform: [{ scale }] }, unavailable && styles.disabled]}>
+      <Pressable
+        accessibilityRole="button"
+        disabled={unavailable}
+        onPress={onPress}
+        onPressIn={() => animate(0.975)}
+        onPressOut={() => animate(1)}
+      >
+        <LinearGradient
+          colors={unavailable ? ['#E5EFEA', '#D8E7E0'] : [colors.forest, '#4A9180']}
+          end={{ x: 1, y: 0.8 }}
+          start={{ x: 0, y: 0 }}
+          style={styles.button}
+        >
+          <Text style={[styles.label, { color: contentColor }]}>{label}</Text>
+          {loading ? (
+            <ActivityIndicator color={contentColor} />
+          ) : (
+            <ArrowRight color={contentColor} size={20} strokeWidth={2.2} />
+          )}
+        </LinearGradient>
+      </Pressable>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  shadow: {
+    borderRadius: 18,
+    shadowColor: colors.shadow,
+    shadowOffset: { height: 8, width: 0 },
+    shadowOpacity: 0.18,
+    shadowRadius: 15,
+  },
   button: {
     alignItems: 'center',
-    backgroundColor: colors.mint,
-    borderRadius: 14,
+    borderRadius: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 56,
-    paddingHorizontal: 18,
+    minHeight: 58,
+    paddingHorizontal: 20,
   },
-  pressed: { opacity: 0.82, transform: [{ scale: 0.995 }] },
-  disabled: { opacity: 0.55 },
-  label: { color: colors.forestDeep, fontFamily: fontFamily.bold, fontSize: 15 },
+  disabled: { shadowOpacity: 0 },
+  label: { fontFamily: fontFamily.bold, fontSize: 15 },
 });

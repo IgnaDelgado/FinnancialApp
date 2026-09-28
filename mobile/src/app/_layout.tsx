@@ -26,7 +26,7 @@ export default function RootLayout() {
   if (!fontsLoaded) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator color={colors.mint} size="large" />
+        <ActivityIndicator color={colors.forest} size="large" />
       </View>
     );
   }
@@ -34,7 +34,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
         <Stack screenOptions={{ headerShown: false }} />
       </AuthProvider>
     </SafeAreaProvider>
@@ -44,7 +44,7 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   loading: {
     alignItems: 'center',
-    backgroundColor: colors.forestDeep,
+    backgroundColor: colors.canvas,
     flex: 1,
     justifyContent: 'center',
   },

@@ -1,34 +1,33 @@
-import { WalletCards } from 'lucide-react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fontFamily } from '@/theme';
 
-export function BrandMark({ inverted = false }: { inverted?: boolean }) {
+export function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <View style={styles.row}>
-      <View style={styles.icon}>
-        <WalletCards color={colors.forestDeep} size={21} strokeWidth={2.2} />
-      </View>
-      <View>
-        <Text style={[styles.name, inverted && styles.nameInverted]}>FINANCIAL PLAN</Text>
-        <Text style={[styles.caption, inverted && styles.captionInverted]}>TU DINERO, CON INTENCIÓN</Text>
-      </View>
+      <Image
+        accessibilityIgnoresInvertColors
+        source={require('../../assets/financial-plan-icon.png')}
+        style={[styles.icon, compact && styles.iconCompact]}
+      />
+      {!compact ? (
+        <View>
+          <Text style={styles.name}>Financial Plan</Text>
+          <Text style={styles.caption}>TU DINERO, CON INTENCIÓN</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { alignItems: 'center', flexDirection: 'row', gap: 11 },
+  row: { alignItems: 'center', flexDirection: 'row', gap: 12 },
   icon: {
-    alignItems: 'center',
-    backgroundColor: colors.mint,
-    borderRadius: 13,
-    height: 43,
-    justifyContent: 'center',
-    width: 43,
+    borderRadius: 14,
+    height: 46,
+    width: 46,
   },
-  name: { color: colors.ink, fontFamily: fontFamily.bold, fontSize: 12, letterSpacing: 0.8 },
-  nameInverted: { color: colors.white },
-  caption: { color: colors.muted, fontFamily: fontFamily.medium, fontSize: 8, letterSpacing: 0.6, marginTop: 2 },
-  captionInverted: { color: '#B9CBC4' },
+  iconCompact: { borderRadius: 13, height: 42, width: 42 },
+  name: { color: colors.ink, fontFamily: fontFamily.displayBold, fontSize: 15, letterSpacing: -0.25 },
+  caption: { color: colors.green, fontFamily: fontFamily.bold, fontSize: 7.5, letterSpacing: 0.85, marginTop: 2 },
 });

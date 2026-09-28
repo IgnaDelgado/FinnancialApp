@@ -7,7 +7,7 @@ type NoticeTone = 'error' | 'success' | 'info';
 
 export function NoticeBanner({ message, tone = 'error' }: { message: string; tone?: NoticeTone }) {
   const Icon = tone === 'error' ? CircleAlert : tone === 'success' ? CircleCheck : Info;
-  const color = tone === 'error' ? colors.coral : colors.green;
+  const color = tone === 'error' ? colors.coral : tone === 'success' ? colors.green : colors.lavenderDeep;
 
   return (
     <View
@@ -24,14 +24,14 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'flex-start',
     backgroundColor: colors.paleGreen,
-    borderRadius: 14,
+    borderRadius: 16,
     flexDirection: 'row',
     gap: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
   error: { backgroundColor: colors.paleRed },
-  info: { backgroundColor: '#E9EFF1' },
+  info: { backgroundColor: '#F0EFFF' },
   message: {
     color: colors.ink,
     flex: 1,
