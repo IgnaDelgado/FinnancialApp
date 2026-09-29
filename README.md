@@ -1,15 +1,29 @@
 # Financial Plan
 
-Mobile-first personal finance planning application. The backend currently
-provides the FastAPI and PostgreSQL foundation, user registration, JWT access
-tokens, rotating refresh-token sessions, and logout. The minimal mobile client
-required to complete milestone M1 has not yet been implemented.
+Mobile-first personal finance planning application. The current authentication
+slice includes the FastAPI and PostgreSQL backend plus an Expo/React Native
+client for registration, login, session restoration, refresh-token rotation,
+profile display, and logout.
+
+## Current status
+
+Milestone M1 authentication V2 is complete for local development. The backend
+and mobile client support registration, login, automatic session restoration,
+rotating refresh tokens, current-device logout, global logout, ARS/USD reference
+currency selection, configurable browser CORS, and a responsive iPhone-first
+interface.
+
+The next product milestone is M2 financial accounts and current balances. Email
+verification, password recovery, abuse protection, account security controls,
+and user-controlled data export/deletion are tracked in the
+[pre-beta checklist](docs/roadmap.md#pre-beta-authentication-and-account-checklist).
 
 ## Prerequisites
 
 - Docker with Docker Compose
 - Python 3.12
 - [uv](https://docs.astral.sh/uv/)
+- Node.js 24 and npm (mobile client)
 
 ## Run with Docker Compose
 
@@ -35,7 +49,7 @@ Invoke-RestMethod http://localhost:8000/ready
 ## Register a user
 
 The current M1 backend slice supports user registration. Passwords must contain
-between 15 and 128 characters; Unicode, whitespace, and passphrases are
+between 8 and 128 characters; Unicode, whitespace, and passphrases are
 accepted, and no composition rules are imposed. Only ARS and USD are supported
 as reference currencies, with ARS as the default.
 
@@ -141,12 +155,20 @@ uv run alembic upgrade head
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Access JWT lifetime; defaults to 15 minutes. |
 | `REFRESH_TOKEN_EXPIRE_DAYS` | Sliding refresh lifetime; defaults to 20 days. |
 | `SESSION_ABSOLUTE_EXPIRE_DAYS` | Maximum family lifetime; defaults to 90 days. |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated browser origins allowed outside local development. Native apps do not require CORS. |
 | `POSTGRES_DB` | Creates the local Compose database. |
 | `POSTGRES_USER` | Creates the local Compose database user. |
 | `POSTGRES_PASSWORD` | Sets the local Compose database password. |
 | `DATABASE_URL` | SQLAlchemy Psycopg URL injected by Compose or set for host commands. |
 
 Never commit `.env`; only `.env.example` belongs in version control.
+
+## Run the mobile client
+
+Start the backend first. Then follow the setup, API-address, and verification
+instructions in [`mobile/README.md`](mobile/README.md). The complete guided
+walkthrough lives in
+[`docs/mobile-authentication-course.md`](docs/mobile-authentication-course.md).
 
 `POSTGRES_PASSWORD` initializes a new PostgreSQL volume; changing the variable
 does not update the password stored in an existing volume. Preserve volumes

@@ -187,6 +187,35 @@ Integrate and polish the mobile screens delivered by M1–M8, then complete secu
 
 Deployment provider, observability stack, retention policy, numeric quality thresholds, and whether export/deletion block private testing are **Pending decision**.
 
+## Pre-beta authentication and account checklist
+
+M1 authentication V2 is sufficient for local development and continued MVP
+feature work. Before inviting external users to a public beta, complete and
+verify the following bounded security and account-management capabilities:
+
+1. **Email verification.** Prove ownership with an expiring, single-use token
+   and decide whether unverified accounts may sign in or access financial data.
+2. **Password recovery.** Return a generic response that does not disclose
+   whether an email exists; store only a hash of the random reset token; expire
+   and invalidate it after one use; revoke active refresh sessions after reset.
+3. **Abuse protection.** Rate-limit registration, login, verification, and
+   recovery attempts without exposing account existence.
+4. **Authenticated password change.** Require the current password, hash the
+   replacement with Argon2id, and revoke previous refresh sessions.
+5. **Session management.** Let users inspect and revoke active device sessions
+   without exposing raw refresh tokens or unnecessary device information.
+6. **Data export and account deletion.** Provide user-controlled export and a
+   documented deletion flow before public availability.
+
+Email delivery requires a selected provider, verified sending domain, secure
+production secrets, HTTPS callback links, retry behavior, and tests. No email
+provider is selected yet, so the implementation must not invent one.
+
+Face ID or device biometrics may later protect local access to an existing
+session, but they do not replace backend authentication. Multi-factor
+authentication and social login remain optional post-beta improvements unless
+risk or user research demonstrates an earlier requirement.
+
 ## Dependency Summary
 
 M0 establishes decisions and tooling. M1 provides identity and isolation. M2 supplies balances used by M3 and M4. Availability in M5 depends on accounts, obligations, budgets, and allocations. M6 adds investments and net worth. Scenarios in M7 reuse settled availability and goal rules. Monthly close in M8 depends on the accumulated financial state. Every M1–M8 domain slice includes its minimal mobile interface; M9 integrates and validates the complete MVP for release.
