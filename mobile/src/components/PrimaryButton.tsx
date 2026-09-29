@@ -67,10 +67,10 @@ const styles = StyleSheet.create({
   },
   button: {
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 22,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 58,
+    minHeight: 56,
     paddingHorizontal: 20,
   },
   disabled: { shadowOpacity: 0 },

@@ -1,4 +1,4 @@
-import { KeyRound, Mail, RotateCcw, ShieldCheck } from 'lucide-react-native';
+import { KeyRound, Mail, RotateCcw } from 'lucide-react-native';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -36,15 +36,8 @@ export default function LoginScreen() {
 
   return (
     <AuthShell
-      eyebrow="VOLVÉ A TU PLAN"
-      subtitle="Tus objetivos y decisiones, ordenados en un solo lugar y sin complicaciones."
-      title={'Qué bueno\nverte de nuevo.'}
+      title="Iniciar sesión"
     >
-      <View style={styles.heading}>
-        <Text style={styles.formTitle}>Entrá a tu espacio</Text>
-        <Text style={styles.formSubtitle}>Usá el correo con el que creaste tu cuenta.</Text>
-      </View>
-
       <View style={styles.fields}>
         <FormField
           autoCapitalize="none"
@@ -93,41 +86,21 @@ export default function LoginScreen() {
       />
 
       <View style={styles.switchRow}>
-        <Text style={styles.switchCopy}>¿Todavía no tenés una cuenta?</Text>
+        <Text style={styles.switchCopy}>¿No tenés cuenta?</Text>
         <Link href="/(auth)/register" asChild>
           <Pressable><Text style={styles.switchLink}>Crear cuenta</Text></Pressable>
         </Link>
-      </View>
-
-      <View style={styles.securityNote}>
-        <ShieldCheck color={colors.green} size={18} />
-        <Text style={styles.securityCopy}>
-          Tu contraseña viaja al servidor para validarse y nunca se guarda en el dispositivo.
-        </Text>
       </View>
     </AuthShell>
   );
 }
 
 const styles = StyleSheet.create({
-  heading: { gap: 5 },
-  formTitle: { color: colors.ink, fontFamily: fontFamily.displayMedium, fontSize: 23, letterSpacing: -0.35 },
-  formSubtitle: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 13, lineHeight: 19 },
-  fields: { gap: 15, marginBottom: 19, marginTop: 22 },
-  restoreBox: { gap: 7 },
+  fields: { gap: 12 },
+  restoreBox: { gap: 5 },
   retryButton: { alignItems: 'center', alignSelf: 'flex-start', flexDirection: 'row', gap: 7, paddingVertical: 4 },
   retryText: { color: colors.green, fontFamily: fontFamily.bold, fontSize: 12 },
-  switchRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 5, justifyContent: 'center', marginTop: 21 },
+  switchRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 5, justifyContent: 'center', marginTop: 8 },
   switchCopy: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 13 },
   switchLink: { color: colors.green, fontFamily: fontFamily.bold, fontSize: 13 },
-  securityNote: {
-    alignItems: 'flex-start',
-    backgroundColor: colors.paleGreen,
-    borderRadius: 16,
-    flexDirection: 'row',
-    gap: 9,
-    marginTop: 20,
-    padding: 13,
-  },
-  securityCopy: { color: colors.green, flex: 1, fontFamily: fontFamily.medium, fontSize: 10.5, lineHeight: 16 },
 });

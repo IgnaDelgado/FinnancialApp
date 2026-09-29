@@ -15,6 +15,8 @@ authenticated request and did not distinguish access from renewal credentials.
 
 - Passwords remain Argon2id hashes and login retains dummy verification for
   unknown email addresses.
+- Registration accepts passwords between 8 and 128 characters. No composition
+  rule is imposed; the interface encourages longer passphrases.
 - Access tokens are HS256 JWTs valid for 15 minutes. They contain only `sub`,
   `iat`, `exp`, and `type=access`; verification is local. HS256 fits a single
   backend that both issues and verifies tokens. Its secret comes from settings.

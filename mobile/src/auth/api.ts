@@ -1,5 +1,3 @@
-import { Platform } from 'react-native';
-
 import type { LoginInput, RegistrationInput, TokenPair, User } from './types';
 
 export class ApiError extends Error {
@@ -104,7 +102,7 @@ function validationMessage(body: unknown): string {
     Array.isArray(entry.loc) && entry.loc.includes('password'),
   );
   return passwordError
-    ? 'La contraseña debe tener entre 15 y 128 caracteres.'
+    ? 'La contraseña debe tener entre 8 y 128 caracteres.'
     : 'Revisa el correo y los demás datos ingresados.';
 }
 
@@ -116,6 +114,8 @@ function readDetail(body: unknown): string | null {
 export function getApiBaseUrl(): string {
   const configured = process.env.EXPO_PUBLIC_API_URL?.trim().replace(/\/+$/, '');
   if (configured) return configured;
-  if (__DEV__) return Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
-  throw new ApiError('La aplicación no tiene configurada la URL de la API.', null);
+  throw new ApiError(
+    'La aplicación no tiene configurada EXPO_PUBLIC_API_URL.',
+    null,
+  );
 }

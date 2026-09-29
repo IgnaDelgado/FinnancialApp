@@ -9,7 +9,7 @@ from app.domain.currency import Currency
 
 class UserRegistrationRequest(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=15, max_length=128)
+    password: str = Field(min_length=8, max_length=128)
     reference_currency: Currency = Currency.ARS
 
     @field_validator("email", mode="before")

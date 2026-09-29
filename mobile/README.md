@@ -27,14 +27,13 @@ Copy `.env.example` to the ignored `.env.local` and replace the address:
 Copy-Item .env.example .env.local
 ```
 
-- Android Emulator can use `http://10.0.2.2:8000`.
-- iOS Simulator and web can use `http://localhost:8000`.
-- A physical phone must use the computer's LAN IP, such as
+- The iPhone must use the computer's LAN IP, such as
   `http://192.168.1.100:8000`.
+- Web on the same computer can use `http://localhost:8000`.
 - Production must use the deployed API's HTTPS URL.
 
-When `EXPO_PUBLIC_API_URL` is absent in development, the app uses the emulator
-defaults above.
+`EXPO_PUBLIC_API_URL` is required. Restart Expo after changing it so the new
+value is included in the application bundle.
 
 ## Run and verify
 

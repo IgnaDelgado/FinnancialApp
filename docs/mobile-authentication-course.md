@@ -262,16 +262,18 @@ Nunca debe contener contraseñas, claves JWT ni tokens.
 
 Direcciones habituales:
 
-- Android Emulator: `10.0.2.2` representa la PC anfitriona.
-- iOS Simulator: `localhost` suele representar la Mac anfitriona.
-- Teléfono físico: necesita la IP LAN de la computadora.
+- El iPhone físico necesita la IP LAN de la computadora.
+- Expo Web en la misma computadora puede usar `localhost`.
 - Producción: URL HTTPS del backend desplegado.
 
 `localhost` en un teléfono físico significa “este teléfono”, no tu PC.
+La aplicación exige `EXPO_PUBLIC_API_URL` para evitar conectarse por accidente
+a una dirección incorrecta.
 
 Los navegadores aplican CORS; las aplicaciones nativas no siguen ese mismo
-modelo. El MVP móvil no añade una política CORS al backend sin decidir primero
-qué orígenes web serán soportados.
+modelo. El backend permite los orígenes locales de Expo Web durante desarrollo
+y exige configurar explícitamente cualquier origen web remoto mediante
+`CORS_ALLOWED_ORIGINS`.
 
 ## 12. Layout y estilos
 
@@ -293,7 +295,9 @@ solo estética: reduce divergencias y facilita accesibilidad y cambios de marca.
 
 `SafeAreaView` evita cámaras, islas y barras del sistema.
 `KeyboardAvoidingView` impide que el teclado tape campos importantes.
-`ScrollView` permite completar registro en pantallas pequeñas.
+`ScrollView` no se desplaza cuando el contenido entra en una pantalla normal,
+pero permite completar el registro cuando la pantalla o el teclado dejan menos
+espacio disponible.
 
 ## 13. Async/await y errores
 

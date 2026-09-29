@@ -37,7 +37,7 @@ def test_register_user_returns_public_user_data(
         (
             {
                 "email": "learner@example.com",
-                "password": "too short",
+                "password": "short7!",
             },
             "password",
         ),
@@ -60,6 +60,21 @@ def test_register_user_rejects_invalid_input(
 
     assert response.status_code == 422
     assert response.json()["detail"][0]["loc"][-1] == invalid_field
+
+
+def test_register_user_accepts_eight_character_password(
+    api_client: TestClient,
+) -> None:
+    response = api_client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "eight@example.com",
+            "password": "eight123",
+            "reference_currency": "ARS",
+        },
+    )
+
+    assert response.status_code == 201
 
 
 def test_register_user_returns_generic_conflict_for_duplicate_email(

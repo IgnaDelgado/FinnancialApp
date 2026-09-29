@@ -22,7 +22,7 @@ export default function RegisterScreen() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const canSubmit = email.trim().length > 0 && password.length >= 15 && confirmation.length > 0;
+  const canSubmit = email.trim().length > 0 && password.length >= 8 && confirmation.length > 0;
 
   async function handleSubmit() {
     if (!canSubmit || submitting) return;
@@ -43,15 +43,8 @@ export default function RegisterScreen() {
 
   return (
     <AuthShell
-      eyebrow="EMPECEMOS JUNTOS"
-      subtitle="Crear tu espacio lleva menos de un minuto. Después vamos paso a paso."
-      title={'Tu futuro empieza\ncon un pequeño paso.'}
+      title="Crear cuenta"
     >
-      <View style={styles.heading}>
-        <Text style={styles.formTitle}>Creá tu cuenta</Text>
-        <Text style={styles.formSubtitle}>Primero, contanos cómo querés ingresar.</Text>
-      </View>
-
       <View style={styles.fields}>
         <FormField
           autoCapitalize="none"
@@ -68,7 +61,7 @@ export default function RegisterScreen() {
           autoCapitalize="none"
           autoComplete="new-password"
           icon={<KeyRound color={colors.muted} size={19} />}
-          label="Contraseña · mínimo 15 caracteres"
+          label="Contraseña · mínimo 8 caracteres"
           onChangeText={setPassword}
           onToggleSecret={() => setShowPassword((current) => !current)}
           placeholder="Creá una frase segura"
@@ -91,8 +84,7 @@ export default function RegisterScreen() {
         />
       </View>
 
-      <Text style={styles.currencyLabel}>¿Con qué moneda pensás tu día a día?</Text>
-      <Text style={styles.currencyHelp}>Es solo tu referencia principal. Nunca mezclaremos monedas sin avisarte.</Text>
+      <Text style={styles.currencyLabel}>Moneda de referencia</Text>
       <View accessibilityRole="radiogroup" style={styles.currencyRow}>
         {(['ARS', 'USD'] as const).map((option) => {
           const selected = currency === option;
@@ -123,7 +115,7 @@ export default function RegisterScreen() {
       />
 
       <View style={styles.switchRow}>
-        <Text style={styles.switchCopy}>¿Ya tenés una cuenta?</Text>
+        <Text style={styles.switchCopy}>¿Ya tenés cuenta?</Text>
         <Link href="/(auth)/login" asChild>
           <Pressable><Text style={styles.switchLink}>Iniciar sesión</Text></Pressable>
         </Link>
@@ -133,30 +125,26 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  heading: { gap: 5 },
-  formTitle: { color: colors.ink, fontFamily: fontFamily.displayMedium, fontSize: 23, letterSpacing: -0.35 },
-  formSubtitle: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 13 },
-  fields: { gap: 15, marginTop: 22 },
-  currencyLabel: { color: colors.slate, fontFamily: fontFamily.semibold, fontSize: 12.5, marginTop: 20 },
-  currencyHelp: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 11, lineHeight: 16, marginTop: 4 },
-  currencyRow: { flexDirection: 'row', gap: 9, marginBottom: 19, marginTop: 10 },
+  fields: { gap: 7 },
+  currencyLabel: { color: colors.slate, fontFamily: fontFamily.semibold, fontSize: 12.5, marginTop: 2 },
+  currencyRow: { flexDirection: 'row', gap: 9, marginBottom: 3, marginTop: 3 },
   currencyOption: {
     alignItems: 'center',
     backgroundColor: colors.field,
     borderColor: colors.line,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 58,
-    paddingHorizontal: 13,
+    minHeight: 50,
+    paddingHorizontal: 12,
   },
   currencySelected: { backgroundColor: colors.softMint, borderColor: colors.mint },
   currencyCode: { color: colors.muted, fontFamily: fontFamily.bold, fontSize: 14 },
   currencyCodeSelected: { color: colors.forest },
   currencyName: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 10, marginTop: 2 },
-  switchRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 5, justifyContent: 'center', marginTop: 21 },
+  switchRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 5, justifyContent: 'center', marginTop: 2 },
   switchCopy: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 13 },
   switchLink: { color: colors.green, fontFamily: fontFamily.bold, fontSize: 13 },
 });

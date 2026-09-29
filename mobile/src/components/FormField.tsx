@@ -29,6 +29,7 @@ export function FormField({
         {icon}
         <TextInput
           {...inputProps}
+          accessibilityLabel={inputProps.accessibilityLabel ?? label}
           onBlur={(event) => {
             setFocused(false);
             inputProps.onBlur?.(event);
@@ -60,30 +61,26 @@ const styles = StyleSheet.create({
   label: { color: colors.slate, fontFamily: fontFamily.semibold, fontSize: 12.5, marginLeft: 2 },
   inputShell: {
     alignItems: 'center',
-    backgroundColor: colors.field,
+    backgroundColor: colors.white,
     borderColor: colors.line,
-    borderRadius: 17,
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 11,
-    minHeight: 58,
-    paddingHorizontal: 16,
+    gap: 10,
+    minHeight: 54,
+    paddingHorizontal: 14,
   },
   inputFocused: {
     backgroundColor: colors.white,
-    borderColor: colors.mint,
+    borderColor: colors.forest,
     borderWidth: 1.5,
-    shadowColor: colors.mint,
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
   },
   input: {
     color: colors.ink,
     flex: 1,
     fontFamily: fontFamily.body,
     fontSize: 15,
-    minHeight: 52,
-    paddingVertical: 8,
+    minHeight: 50,
+    paddingVertical: 6,
   },
 });

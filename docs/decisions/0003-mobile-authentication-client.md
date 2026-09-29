@@ -26,6 +26,9 @@ Native.
   client requires a separate secure-cookie decision.
 - Configure the API URL through `EXPO_PUBLIC_API_URL`; no secret may use the
   `EXPO_PUBLIC_` prefix because Expo inlines those values into the client bundle.
+- Native Android and iOS requests do not depend on browser CORS. Expo Web may
+  use local loopback origins in development; deployed browser origins must be
+  listed explicitly through `CORS_ALLOWED_ORIGINS`.
 - Centralize HTTP paths, JSON serialization, bearer headers, and API errors in
   the auth API module.
 - Deduplicate simultaneous refresh attempts and retry an authenticated request
