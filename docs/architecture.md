@@ -81,6 +81,8 @@ Every allocation references one source account and one goal. The account, alloca
 
 Balance changes create historical snapshots. Referenced accounts and goals are archived instead of deleted, and archived accounts are excluded from calculations and new allocations. `MONTHLY` recurrence templates create period instances idempotently. Confirmed monthly closes are locked; an explicit reopen event is recorded before a correction. Detailed table shapes, snapshot correction policy, archival behavior for unreferenced records, and concurrency controls are **Pending decision**.
 
+The first accounts slice persists `financial_accounts` and `account_balance_snapshots` separately. An account stores its current cash balance, currency, liquidity flag, and last balance-update time. Creation and each absolute balance update append a snapshot in the same transaction. Account queries and mutations always include the authenticated user's identifier; archived accounts are hidden from active-account operations. The versioned account API currently supports create, list, read, balance update, balance history, and archive. The mobile account screen covers create, list, and balance update; account metadata editing and archived-account management remain for a later bounded slice.
+
 Technical timestamps are stored in UTC. Financial dates, today, due dates, and month boundaries use `America/Argentina/Cordoba`.
 
 ## Core Data Flows

@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { Link } from 'expo-router';
 import {
   ArrowUpRight,
   CheckCircle2,
@@ -95,7 +96,7 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.greeting}>Empecemos por lo simple.</Text>
             <Text style={styles.intro}>
-              Primero sumamos dónde está tu dinero. Después vas a poder ver cuánto tenés realmente disponible.
+              Empezá por registrar dónde está tu dinero. Después vamos a conectar esos saldos con tu plan mensual.
             </Text>
 
             <LinearGradient
@@ -113,20 +114,22 @@ export default function HomeScreen() {
                   <Text style={styles.readyText}>CUENTA ACTIVA</Text>
                 </View>
               </View>
-              <Text style={styles.heroLabel}>TU PRÓXIMO PASO</Text>
-              <Text style={styles.heroValue}>Agregá tu primera cuenta</Text>
+              <Text style={styles.heroLabel}>CUENTAS Y SALDOS</Text>
+              <Text style={styles.heroValue}>Organizá tu dinero</Text>
               <Text style={styles.heroDescription}>
-                Efectivo, banco o billetera digital. Sin una cuenta todavía no mostramos montos inventados.
+                Agregá efectivo, bancos o billeteras y mantené sus saldos al día. Cada moneda se muestra por separado.
               </Text>
               <View style={styles.heroFooter}>
                 <View>
                   <Text style={styles.heroFooterLabel}>MONEDA PRINCIPAL</Text>
                   <Text style={styles.heroCurrency}>{session.user.reference_currency}</Text>
                 </View>
-                <View style={styles.futureButton}>
-                  <Text style={styles.futureButtonText}>PRÓXIMAMENTE</Text>
-                  <ChevronRight color={colors.lavenderDeep} size={16} />
-                </View>
+                <Link href="/accounts" asChild>
+                  <Pressable accessibilityRole="button" style={styles.futureButton}>
+                    <Text style={styles.futureButtonText}>VER CUENTAS</Text>
+                    <ChevronRight color={colors.lavenderDeep} size={16} />
+                  </Pressable>
+                </Link>
               </View>
             </LinearGradient>
 

@@ -26,6 +26,7 @@ type AuthContextValue = {
   signOutAll: () => Promise<void>;
   signUp: (input: RegistrationInput) => Promise<void>;
   refreshProfile: () => Promise<void>;
+  withAccessToken: <T>(operation: (accessToken: string) => Promise<T>) => Promise<T>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -149,6 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOutAll,
     signUp,
     refreshProfile,
+    withAccessToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
