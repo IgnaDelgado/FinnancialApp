@@ -1,0 +1,46 @@
+from uuid import UUID
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.models.financial_account import AccountBalanceSnapshot, FinancialAccount
+
+
+class FinancialAccountRepository:
+    """Access user-owned accounts and their balance history."""
+
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add(self, account: FinancialAccount) -> None:
+        self._session.add(account)
+
+    def add_snapshot(self, snapshot: AccountBalanceSnapshot) -> None:
+        self._session.add(snapshot)
+
+    def list_active(self, user_id: UUID) -> list[FinancialAccount]:
+        statement = (
+            select(FinancialAccount)
+            .where(
+                FinancialAccount.user_id == user_id,
+                FinancialAccount.archived_at.is_(None),
+            )
+            .order_by(FinancialAccount.created_at, FinancialAccount.id)
+        )
+        return list(self._session.scalars(statement).all())
+
+    def get_active(self, user_id: UUID, account_id: UUID) -> FinancialAccount | None:
+        statement = select(FinancialAccount).where(
+            FinancialAccount.id == account_id,
+            FinancialAccount.user_id == user_id,
+            FinancialAccount.archived_at.is_(None),
+        )
+        return self._session.scalar(statement)
+
+    def list_snapshots(self, account_id: UUID) -> list[AccountBalanceSnapshot]:
+        statement = (
+            select(AccountBalanceSnapshot)
+            .where(AccountBalanceSnapshot.account_id == account_id)
+            .order_by(AccountBalanceSnapshot.recorded_at, AccountBalanceSnapshot.id)
+        )
+        return list(self._session.scalars(statement).all())

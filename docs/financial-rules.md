@@ -22,6 +22,8 @@ An account records a name, account type, currency, current balance, balance-upda
 
 An investment account's balance is cash only. Positions associated with it are valued separately; a broker total that includes positions is not an account balance for this product. Negative balances and overdrafts are rejected in the MVP. Each balance update records a historical snapshot. Referenced accounts are archived instead of deleted; archived accounts are excluded from calculations and cannot receive new allocations.
 
+Creating an account records its initial balance as the first snapshot. Updating a balance replaces the current recorded amount and appends a snapshot, even if the amount is unchanged: the snapshot records that the user confirmed the balance again. A balance update is an absolute amount, not a deposit or withdrawal. Archived accounts cannot receive balance updates.
+
 ## Money, Precision, and Rounding
 
 Financial calculations use Python `Decimal`; binary floating point must never be used for money. PostgreSQL precision is:
