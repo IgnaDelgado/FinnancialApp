@@ -13,9 +13,11 @@ Expo SDK 57 and React Native client for authentication and manual financial acco
 - Expo Router public and authenticated route groups.
 - Registration feedback for invalid email, password length, confirmation, and duplicate email.
 - Account creation and balance updates, including negative balances.
-- An authenticated home showing actual account balances and per-currency totals, followed by a profile and logout section.
+- Bottom navigation for Accounts, Month, Goals, Investments, and Profile.
+- Accounts shows actual account balances and per-currency totals. Profile holds user details and logout separately.
+- Month, Goals, and Investments are clearly marked as coming soon; they do not show invented values or save data.
 
-Budgets, goals, investments, net worth, and safe-to-spend calculations belong to later roadmap milestones. The home shows only recorded account cash and labels it separately from those future calculations.
+Budgets, goals, investments, net worth, and safe-to-spend calculations belong to later roadmap milestones. The Accounts tab shows only recorded account cash and labels it separately from those future calculations.
 
 ## Configure the backend URL
 

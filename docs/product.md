@@ -42,7 +42,7 @@ every user-owned resource is isolated from other users. Social login,
 multi-factor authentication, and the exact account-recovery flow are outside
 the initial requirement or **Pending decision**.
 
-Registration explains invalid email syntax, password-length and confirmation errors before submission. A duplicate email produces an explicit conflict message. The current home prioritizes recorded accounts and balances; profile data and logout are shown in a separate section below. No unavailable financial metric is shown as if it were implemented.
+Registration explains invalid email syntax, password-length and confirmation errors before submission. A duplicate email produces an explicit conflict message. The current Accounts tab shows recorded balances only; Profile has its own tab for user details and logout. Month, Goals, and Investments are visible in bottom navigation but clearly marked as coming soon. No unavailable financial metric is shown as if it were implemented.
 
 ### Financial accounts
 

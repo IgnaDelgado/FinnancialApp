@@ -67,7 +67,7 @@ Endpoint shapes, versioning, error envelopes, and public API contracts are **Pen
 
 The Expo/React Native TypeScript application presents registration, setup, planning, investment, simulation, and monthly-close workflows. Each completed domain milestone includes its minimal usable mobile screen; mobile work is not deferred to a final integration phase. The application must show actual values, forecasts, and assumptions distinctly and provide calculation explanations supplied by approved backend behavior.
 
-Navigation, state management, API-client implementation, offline behavior, localization, accessibility targets, and secure credential storage are **Pending decision**.
+The authenticated mobile shell currently uses Expo Router bottom tabs for Accounts, Month, Goals, Investments, and Profile. Accounts is the only financial tab with working data; the other financial tabs explicitly show a coming-soon state. Profile is separate from account balances and contains user data and logout controls. State management beyond authentication, offline behavior, localization, and detailed accessibility targets are **Pending decision**.
 
 ## Persistence with PostgreSQL
 
