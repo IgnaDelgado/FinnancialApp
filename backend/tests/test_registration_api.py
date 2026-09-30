@@ -77,7 +77,7 @@ def test_register_user_accepts_eight_character_password(
     assert response.status_code == 201
 
 
-def test_register_user_returns_generic_conflict_for_duplicate_email(
+def test_register_user_explains_duplicate_email_conflict(
     api_client: TestClient,
 ) -> None:
     payload = {
@@ -95,6 +95,4 @@ def test_register_user_returns_generic_conflict_for_duplicate_email(
 
     assert first_response.status_code == 201
     assert duplicate_response.status_code == 409
-    assert duplicate_response.json() == {
-        "detail": "Registration could not be completed"
-    }
+    assert duplicate_response.json() == {"detail": "Email already registered"}

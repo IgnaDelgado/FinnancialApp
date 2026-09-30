@@ -1,6 +1,6 @@
 # Financial Plan mobile client
 
-Expo SDK 57 and React Native client for the M1 authentication flow.
+Expo SDK 57 and React Native client for authentication and manual financial accounts.
 
 ## What is implemented
 
@@ -11,10 +11,11 @@ Expo SDK 57 and React Native client for the M1 authentication flow.
 - Session restoration when the native application starts.
 - Logout for the current device or every refresh session.
 - Expo Router public and authenticated route groups.
+- Registration feedback for invalid email, password length, confirmation, and duplicate email.
+- Account creation and balance updates, including negative balances.
+- An authenticated home showing actual account balances and per-currency totals, followed by a profile and logout section.
 
-Financial accounts, balances, budgets, goals, and investments belong to later
-roadmap milestones. The authenticated home intentionally displays no invented
-balance.
+Budgets, goals, investments, net worth, and safe-to-spend calculations belong to later roadmap milestones. The home shows only recorded account cash and labels it separately from those future calculations.
 
 ## Configure the backend URL
 
@@ -49,6 +50,7 @@ Quality checks:
 ```powershell
 npm run lint
 npm run typecheck
+npm test
 npx expo-doctor
 ```
 
@@ -56,6 +58,7 @@ npx expo-doctor
 
 - `src/app/`: file-based routes and layouts.
 - `src/auth/api.ts`: HTTP requests and API error translation.
+- `src/auth/registrationValidation.ts`: immediate registration-field feedback.
 - `src/auth/AuthProvider.tsx`: session lifecycle and token rotation.
 - `src/auth/tokenStorage.native.ts`: encrypted native refresh-token storage.
 - `src/components/`: reusable presentation components.

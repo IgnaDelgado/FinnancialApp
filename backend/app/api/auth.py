@@ -45,7 +45,7 @@ def register_user(
     except EmailAlreadyRegisteredError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Registration could not be completed",
+            detail="Email already registered",
         ) from exc
     return UserResponse.model_validate(user)
 

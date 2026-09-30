@@ -1,12 +1,15 @@
 import type { LoginInput, RegistrationInput, TokenPair, User } from './types';
 
 export class ApiError extends Error {
+  readonly statusCode: number | null;
+
   constructor(
     message: string,
-    readonly statusCode: number | null,
+    statusCode: number | null,
   ) {
     super(message);
     this.name = 'ApiError';
+    this.statusCode = statusCode;
   }
 }
 
@@ -67,7 +70,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   const responseBody = await readResponseBody(response);
   if (!response.ok) {
-    throw new ApiError(errorMessageFor(response.status, responseBody), response.status);
+    throw new ApiError(errorMessageFor(response.status, responseBody, path), response.status);
   }
   if (response.status === 204) return undefined as T;
   return responseBody as T;
@@ -83,27 +86,32 @@ async function readResponseBody(response: Response): Promise<unknown> {
   }
 }
 
-function errorMessageFor(status: number, body: unknown): string {
+function errorMessageFor(status: number, body: unknown, path: string): string {
   if (status === 401) return 'El correo, la contraseña o la sesión no son válidos.';
-  if (status === 409) return 'No pudimos crear la cuenta con esos datos.';
-  if (status === 422) return validationMessage(body);
+  if (status === 409 && path === '/api/v1/auth/register') {
+    return 'Ya existe una cuenta con ese correo. Iniciá sesión o usá otro correo.';
+  }
+  if (status === 422) return validationMessage(body, path);
   if (status >= 500) return 'El servidor tuvo un problema. Inténtalo nuevamente en unos minutos.';
   return readDetail(body) ?? 'El servidor rechazó la solicitud.';
 }
 
-function validationMessage(body: unknown): string {
+function validationMessage(body: unknown, path: string): string {
   if (typeof body !== 'object' || body === null || !('detail' in body)) {
     return 'Revisa los datos ingresados.';
   }
   const detail = body.detail;
   if (!Array.isArray(detail)) return 'Revisa los datos ingresados.';
-  const passwordError = detail.some((entry) =>
+  const fieldHasError = (field: string) => detail.some((entry) =>
     typeof entry === 'object' && entry !== null && 'loc' in entry &&
-    Array.isArray(entry.loc) && entry.loc.includes('password'),
+    Array.isArray(entry.loc) && entry.loc.includes(field),
   );
-  return passwordError
-    ? 'La contraseña debe tener entre 8 y 128 caracteres.'
-    : 'Revisa el correo y los demás datos ingresados.';
+  if (fieldHasError('email')) return 'Ingresá un correo válido, por ejemplo nombre@correo.com.';
+  if (fieldHasError('password') && path === '/api/v1/auth/register') {
+    return 'La contraseña debe tener entre 8 y 128 caracteres.';
+  }
+  if (fieldHasError('reference_currency')) return 'Elegí ARS o USD como moneda de referencia.';
+  return 'Revisá los datos ingresados.';
 }
 
 function readDetail(body: unknown): string | null {

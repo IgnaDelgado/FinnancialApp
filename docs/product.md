@@ -42,6 +42,8 @@ every user-owned resource is isolated from other users. Social login,
 multi-factor authentication, and the exact account-recovery flow are outside
 the initial requirement or **Pending decision**.
 
+Registration explains invalid email syntax, password-length and confirmation errors before submission. A duplicate email produces an explicit conflict message. The current home prioritizes recorded accounts and balances; profile data and logout are shown in a separate section below. No unavailable financial metric is shown as if it were implemented.
+
 ### Financial accounts
 
 Users manually create cash, bank, digital-wallet, foreign-currency, investment, and other accounts in ARS or USD. Cash, bank, digital-wallet, and foreign-currency accounts are liquid by default; investment-account cash and other accounts are non-liquid by default. Investment positions are never liquid. Accounts may record negative balances, including overdrafts; the same overdraft must not also be counted as a separate liability.

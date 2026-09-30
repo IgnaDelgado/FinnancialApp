@@ -120,6 +120,8 @@ logout-all revokes every family for the user. These choices and reuse detection
 are recorded in `docs/decisions/0002-jwt-refresh-sessions.md`. Recovery flow,
 retention policy, and detailed audit requirements remain **Pending decision**.
 
+Registration validates email and password at the API boundary, while the mobile form provides immediate field-level feedback. The unique email constraint remains authoritative for conflicts and the API returns a specific 409 response for an existing address. This exposes account existence; registration and login rate limiting remain required before public launch.
+
 ## Currency and Calculation Boundaries
 
 All monetary operations use the approved decimal types and rounding policy. Availability is calculated independently for ARS and USD and is never converted or combined. The user's default reference currency is ARS and may be changed to USD. Reference-currency net worth may combine currencies only with an explicit manually entered exchange rate whose value, manual source, quote direction, and UTC timestamp are retained. A missing required rate prevents consolidation while separate currency totals remain available. The domain keeps cash balances, allocations, internal transfers, expected income, simulations, and investment market value semantically distinct.
@@ -134,7 +136,7 @@ Ports, health checks, volume strategy, synthetic seed-data workflow, and environ
 
 ## CI/CD and Deployment
 
-GitHub Actions runs on pull requests and pushes to `main`. Backend checks use Ruff for formatting and linting, mypy for static type checking, and pytest with pytest-cov for tests and coverage reporting. Mobile checks use ESLint and `tsc --noEmit`. Every configured check is blocking. Coverage is reported without a blocking threshold initially.
+GitHub Actions runs on pull requests and pushes to `main`. Backend checks use Ruff for formatting and linting, mypy for static type checking, and pytest with pytest-cov for tests and coverage reporting. Mobile checks use ESLint, `tsc --noEmit`, and Node's built-in test runner for pure TypeScript validation and API error handling. Every configured check is blocking. Coverage is reported without a blocking threshold initially.
 
 Deployment initially targets a managed cloud environment. Branch protections, artifact strategy, deployment provider, environments, approval gates, rollback process, backups, recovery objectives, logging, and monitoring are **Pending decision**.
 

@@ -1,17 +1,13 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link } from 'expo-router';
+import { Link, useFocusEffect } from 'expo-router';
 import {
-  ArrowUpRight,
-  CheckCircle2,
   ChevronRight,
   LogOut,
   RefreshCw,
-  ShieldCheck,
-  Sparkles,
   UserRound,
   WalletCards,
 } from 'lucide-react-native';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AccessibilityInfo,
   ActivityIndicator,
@@ -27,6 +23,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ApiError } from '@/auth/api';
 import { useAuth } from '@/auth/AuthProvider';
+import {
+  getAccountCashTotals,
+  listAccounts,
+  type AccountCashTotal,
+  type FinancialAccount,
+} from '@/accounts/api';
+import { formatMoney } from '@/accounts/format';
 import { BrandMark } from '@/components/BrandMark';
 import { NoticeBanner } from '@/components/NoticeBanner';
 import { colors, fontFamily } from '@/theme';
@@ -34,10 +37,32 @@ import { colors, fontFamily } from '@/theme';
 type Action = 'profile' | 'logout' | 'logout-all' | null;
 
 export default function HomeScreen() {
-  const { refreshProfile, session, signOut, signOutAll } = useAuth();
+  const { refreshProfile, session, signOut, signOutAll, withAccessToken } = useAuth();
+  const [accounts, setAccounts] = useState<FinancialAccount[] | null>(null);
+  const [cashTotals, setCashTotals] = useState<AccountCashTotal[]>([]);
+  const [accountsError, setAccountsError] = useState<string | null>(null);
   const [action, setAction] = useState<Action>(null);
   const [error, setError] = useState<string | null>(null);
   const entrance = useMemo(() => new Animated.Value(0), []);
+
+  useFocusEffect(useCallback(() => {
+    if (!session) return;
+    let active = true;
+    setAccounts(null);
+    setCashTotals([]);
+    setAccountsError(null);
+    void withAccessToken((token) => Promise.all([listAccounts(token), getAccountCashTotals(token)]))
+      .then(([accountResult, totalResult]) => {
+        if (!active) return;
+        setAccounts(accountResult);
+        setCashTotals(totalResult);
+        setAccountsError(null);
+      })
+      .catch((caught) => {
+        if (active) setAccountsError(caught instanceof ApiError ? caught.message : 'No pudimos cargar tus cuentas.');
+      });
+    return () => { active = false; };
+  }, [session, withAccessToken]));
 
   useEffect(() => {
     let active = true;
@@ -90,13 +115,9 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            <View style={styles.welcomePill}>
-              <Sparkles color={colors.peachDeep} size={13} />
-              <Text style={styles.welcomePillText}>TU PLAN YA ESTÁ EN MARCHA</Text>
-            </View>
-            <Text style={styles.greeting}>Empecemos por lo simple.</Text>
+            <Text style={styles.greeting}>Tus cuentas, en claro.</Text>
             <Text style={styles.intro}>
-              Empezá por registrar dónde está tu dinero. Después vamos a conectar esos saldos con tu plan mensual.
+              Por ahora, este inicio muestra tus saldos registrados. El dinero disponible y el patrimonio neto llegarán cuando incorporemos el resto del plan.
             </Text>
 
             <LinearGradient
@@ -109,34 +130,60 @@ export default function HomeScreen() {
                 <View style={styles.heroIcon}>
                   <WalletCards color={colors.forest} size={24} />
                 </View>
-                <View style={styles.readyBadge}>
-                  <CheckCircle2 color={colors.green} size={14} />
-                  <Text style={styles.readyText}>CUENTA ACTIVA</Text>
-                </View>
+                <Text style={styles.heroLabel}>SALDO TOTAL DE CUENTAS</Text>
               </View>
-              <Text style={styles.heroLabel}>CUENTAS Y SALDOS</Text>
-              <Text style={styles.heroValue}>Organizá tu dinero</Text>
-              <Text style={styles.heroDescription}>
-                Agregá efectivo, bancos o billeteras y mantené sus saldos al día. Cada moneda se muestra por separado.
-              </Text>
+              {accountsError ? (
+                <Text style={styles.heroValue}>No pudimos mostrar tus saldos</Text>
+              ) : accounts === null ? (
+                <ActivityIndicator color={colors.forest} style={styles.accountsLoading} />
+              ) : accounts?.length ? (
+                cashTotals.map((total) => (
+                  <Text
+                    key={total.currency}
+                    style={[styles.heroValue, total.balance.startsWith('-') && styles.negativeBalance]}
+                  >
+                    {formatMoney(total.balance, total.currency)}
+                  </Text>
+                ))
+              ) : (
+                <Text style={styles.heroValue}>Todavía no registraste cuentas</Text>
+              )}
+              <Text style={styles.heroDescription}>Suma saldos positivos y negativos por moneda. No es dinero disponible para gastar.</Text>
               <View style={styles.heroFooter}>
-                <View>
-                  <Text style={styles.heroFooterLabel}>MONEDA PRINCIPAL</Text>
-                  <Text style={styles.heroCurrency}>{session.user.reference_currency}</Text>
-                </View>
+                <Text style={styles.heroFooterLabel}>ACTUALIZÁ TUS SALDOS CUANDO CAMBIEN</Text>
                 <Link href="/accounts" asChild>
                   <Pressable accessibilityRole="button" style={styles.futureButton}>
-                    <Text style={styles.futureButtonText}>VER CUENTAS</Text>
+                    <Text style={styles.futureButtonText}>{accounts?.length ? 'GESTIONAR' : 'AGREGAR'}</Text>
                     <ChevronRight color={colors.lavenderDeep} size={16} />
                   </Pressable>
                 </Link>
               </View>
             </LinearGradient>
 
+            {accountsError ? <NoticeBanner message={accountsError} /> : null}
+
+            {accounts?.length ? (
+              <View style={styles.accountList}>
+                <Text style={styles.sectionTitle}>Tus cuentas</Text>
+                {accounts.map((account) => (
+                  <Link href="/accounts" asChild key={account.id}>
+                    <Pressable style={styles.accountRow}>
+                      <View style={styles.accountRowCopy}>
+                        <Text style={styles.accountName}>{account.name}</Text>
+                        <Text style={styles.accountMeta}>{account.current_balance.startsWith('-') ? 'Saldo en rojo' : account.is_liquid ? 'Cuenta líquida' : 'No líquida'}</Text>
+                      </View>
+                      <Text style={[styles.accountBalance, account.current_balance.startsWith('-') && styles.negativeBalance]}>{formatMoney(account.current_balance, account.currency)}</Text>
+                      <ChevronRight color={colors.muted} size={15} />
+                    </Pressable>
+                  </Link>
+                ))}
+              </View>
+            ) : null}
+
             <View style={styles.sectionHeader}>
               <View>
-                <Text style={styles.sectionEyebrow}>TODO EN ORDEN</Text>
-                <Text style={styles.sectionTitle}>Tu cuenta</Text>
+                <Text style={styles.sectionEyebrow}>TUS DATOS</Text>
+                <Text style={styles.sectionTitle}>Perfil</Text>
               </View>
               <Pressable
                 accessibilityLabel="Actualizar perfil"
@@ -160,18 +207,6 @@ export default function HomeScreen() {
               <ProfileRow label="Te sumaste el" value={formatDate(session.user.created_at)} />
             </View>
 
-            <View style={styles.securityCard}>
-              <View style={styles.securityIcon}>
-                <ShieldCheck color={colors.lavenderDeep} size={21} />
-              </View>
-              <View style={styles.securityCopy}>
-                <Text style={styles.securityTitle}>Tu sesión está protegida</Text>
-                <Text style={styles.securityDescription}>
-                  Guardamos la credencial de renovación de forma segura en tu dispositivo.
-                </Text>
-              </View>
-            </View>
-
             {error ? <NoticeBanner message={error} /> : null}
 
             <Pressable
@@ -187,7 +222,6 @@ export default function HomeScreen() {
               onPress={() => void runAction('logout-all', signOutAll)}
               style={({ pressed }) => [styles.logoutAllButton, pressed && styles.pressed]}
             >
-              <ArrowUpRight color={colors.coral} size={16} />
               <Text style={styles.logoutAllText}>Cerrar todas las sesiones</Text>
             </Pressable>
           </Animated.View>
@@ -220,23 +254,26 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 34, paddingHorizontal: 20 },
   topBar: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', paddingTop: 12 },
   avatar: { alignItems: 'center', backgroundColor: colors.white, borderColor: colors.line, borderRadius: 22, borderWidth: 1, height: 43, justifyContent: 'center', shadowColor: colors.shadow, shadowOffset: { height: 4, width: 0 }, shadowOpacity: 0.08, shadowRadius: 10, width: 43 },
-  welcomePill: { alignItems: 'center', alignSelf: 'flex-start', backgroundColor: '#FFF0E7', borderRadius: 999, flexDirection: 'row', gap: 6, marginTop: 31, paddingHorizontal: 11, paddingVertical: 7 },
-  welcomePillText: { color: colors.peachDeep, fontFamily: fontFamily.bold, fontSize: 8.5, letterSpacing: 0.7 },
-  greeting: { color: colors.ink, fontFamily: fontFamily.displayBold, fontSize: 34, letterSpacing: -1, lineHeight: 39, marginTop: 11 },
+  greeting: { color: colors.ink, fontFamily: fontFamily.displayBold, fontSize: 34, letterSpacing: -1, lineHeight: 39, marginTop: 31 },
   intro: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 14, lineHeight: 21, marginTop: 7, maxWidth: 345 },
   heroCard: { borderColor: 'rgba(255,255,255,0.8)', borderRadius: 28, borderWidth: 1, marginTop: 23, padding: 19, shadowColor: colors.shadow, shadowOffset: { height: 12, width: 0 }, shadowOpacity: 0.09, shadowRadius: 24 },
   heroTop: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   heroIcon: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.72)', borderRadius: 15, height: 49, justifyContent: 'center', width: 49 },
-  readyBadge: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.66)', borderRadius: 20, flexDirection: 'row', gap: 6, paddingHorizontal: 10, paddingVertical: 7 },
-  readyText: { color: colors.green, fontFamily: fontFamily.bold, fontSize: 8.5, letterSpacing: 0.65 },
-  heroLabel: { color: colors.green, fontFamily: fontFamily.bold, fontSize: 9, letterSpacing: 0.8, marginTop: 23 },
+  heroLabel: { color: colors.green, flex: 1, fontFamily: fontFamily.bold, fontSize: 9, letterSpacing: 0.8, textAlign: 'right' },
   heroValue: { color: colors.ink, fontFamily: fontFamily.displayMedium, fontSize: 24, letterSpacing: -0.4, marginTop: 5 },
+  accountsLoading: { alignSelf: 'flex-start', marginTop: 16 },
   heroDescription: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 12, lineHeight: 18, marginTop: 7 },
-  heroFooter: { alignItems: 'flex-end', borderTopColor: 'rgba(57,121,107,0.12)', borderTopWidth: 1, flexDirection: 'row', justifyContent: 'space-between', marginTop: 18, paddingTop: 15 },
-  heroFooterLabel: { color: colors.muted, fontFamily: fontFamily.bold, fontSize: 8, letterSpacing: 0.65 },
-  heroCurrency: { color: colors.forest, fontFamily: fontFamily.bold, fontSize: 16, marginTop: 2 },
+  heroFooter: { alignItems: 'center', borderTopColor: 'rgba(57,121,107,0.12)', borderTopWidth: 1, flexDirection: 'row', gap: 8, justifyContent: 'space-between', marginTop: 18, paddingTop: 15 },
+  heroFooterLabel: { color: colors.muted, flex: 1, fontFamily: fontFamily.bold, fontSize: 8, letterSpacing: 0.65 },
   futureButton: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.68)', borderRadius: 12, flexDirection: 'row', gap: 3, paddingHorizontal: 9, paddingVertical: 8 },
   futureButtonText: { color: colors.lavenderDeep, fontFamily: fontFamily.bold, fontSize: 7.5, letterSpacing: 0.55 },
+  accountList: { gap: 9, marginTop: 25 },
+  accountRow: { alignItems: 'center', backgroundColor: colors.white, borderColor: colors.line, borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: 8, minHeight: 66, paddingHorizontal: 13 },
+  accountRowCopy: { flex: 1, gap: 3 },
+  accountName: { color: colors.ink, fontFamily: fontFamily.semibold, fontSize: 13 },
+  accountMeta: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 10 },
+  accountBalance: { color: colors.ink, fontFamily: fontFamily.semibold, fontSize: 12 },
+  negativeBalance: { color: colors.coral },
   sectionHeader: { alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'space-between', marginTop: 30 },
   sectionEyebrow: { color: colors.green, fontFamily: fontFamily.bold, fontSize: 8.5, letterSpacing: 0.8 },
   sectionTitle: { color: colors.ink, fontFamily: fontFamily.displayMedium, fontSize: 22, marginTop: 2 },
@@ -246,11 +283,6 @@ const styles = StyleSheet.create({
   profileLabel: { color: colors.muted, flex: 1, fontFamily: fontFamily.body, fontSize: 12 },
   profileValue: { color: colors.ink, flex: 1.55, fontFamily: fontFamily.semibold, fontSize: 12, textAlign: 'right' },
   rowDivider: { backgroundColor: colors.line, height: 1 },
-  securityCard: { alignItems: 'flex-start', backgroundColor: '#F0EFFF', borderRadius: 20, flexDirection: 'row', gap: 12, marginBottom: 18, marginTop: 16, padding: 15 },
-  securityIcon: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.65)', borderRadius: 12, height: 40, justifyContent: 'center', width: 40 },
-  securityCopy: { flex: 1 },
-  securityTitle: { color: colors.lavenderDeep, fontFamily: fontFamily.bold, fontSize: 12 },
-  securityDescription: { color: '#77729A', fontFamily: fontFamily.body, fontSize: 10.5, lineHeight: 16, marginTop: 3 },
   logoutButton: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.74)', borderColor: colors.line, borderRadius: 17, borderWidth: 1, flexDirection: 'row', gap: 9, justifyContent: 'center', marginTop: 18, minHeight: 54 },
   logoutText: { color: colors.ink, fontFamily: fontFamily.semibold, fontSize: 12 },
   logoutAllButton: { alignItems: 'center', flexDirection: 'row', gap: 7, justifyContent: 'center', minHeight: 47 },
