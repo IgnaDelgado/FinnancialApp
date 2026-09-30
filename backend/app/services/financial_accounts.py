@@ -80,10 +80,10 @@ class FinancialAccountService:
         return account
 
     def list_balance_history(
-        self, *, user_id: UUID, account_id: UUID
+        self, *, user_id: UUID, account_id: UUID, limit: int, offset: int
     ) -> list[AccountBalanceSnapshot]:
         account = self.get_active(user_id, account_id)
-        return self._accounts.list_snapshots(account.id)
+        return self._accounts.list_snapshots(account.id, limit=limit, offset=offset)
 
     def archive(self, *, user_id: UUID, account_id: UUID) -> None:
         account = self.get_active(user_id, account_id)

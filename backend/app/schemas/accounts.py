@@ -12,7 +12,7 @@ class AccountCreateRequest(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     account_type: AccountType
     currency: Currency
-    initial_balance: Decimal = Field(ge=0, max_digits=20, decimal_places=2)
+    initial_balance: Decimal = Field(max_digits=20, decimal_places=2)
     is_liquid: bool | None = None
 
     @field_validator("name")
@@ -25,7 +25,7 @@ class AccountCreateRequest(BaseModel):
 
 
 class AccountBalanceUpdateRequest(BaseModel):
-    balance: Decimal = Field(ge=0, max_digits=20, decimal_places=2)
+    balance: Decimal = Field(max_digits=20, decimal_places=2)
 
 
 class AccountResponse(BaseModel):

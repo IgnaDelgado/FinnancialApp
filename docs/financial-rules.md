@@ -20,9 +20,11 @@ This document is the authoritative specification for financial behavior. Impleme
 
 An account records a name, account type, currency, current balance, balance-update timestamp, archive status, and whether it is liquid and available for spending. Supported MVP account types include cash, bank, digital wallet, foreign-currency, investment, and other manual accounts. Cash, bank, digital-wallet, and foreign-currency accounts are liquid by default. Investment-account cash and other accounts are non-liquid by default. Investment positions are never liquid.
 
-An investment account's balance is cash only. Positions associated with it are valued separately; a broker total that includes positions is not an account balance for this product. Negative balances and overdrafts are rejected in the MVP. Each balance update records a historical snapshot. Referenced accounts are archived instead of deleted; archived accounts are excluded from calculations and cannot receive new allocations.
+An investment account's balance is cash only. Positions associated with it are valued separately; a broker total that includes positions is not an account balance for this product. Account balances may be negative to record an overdraft or amount owed in that account. A negative balance is not a second, independent liability; later net-worth calculations must count it once. Each balance update records a historical snapshot. Referenced accounts are archived instead of deleted; archived accounts are excluded from calculations and cannot receive new allocations.
 
 Creating an account records its initial balance as the first snapshot. Updating a balance replaces the current recorded amount and appends a snapshot, even if the amount is unchanged: the snapshot records that the user confirmed the balance again. A balance update is an absolute amount, not a deposit or withdrawal. Archived accounts cannot receive balance updates.
+
+Balance-history reads are paginated in chronological order by timestamp and snapshot ID. The API returns at most 50 snapshots by default, or up to 100 when requested; clients can request later pages with an offset. Pagination limits each response, but does not discard historical records or reduce database storage.
 
 ## Money, Precision, and Rounding
 
@@ -66,7 +68,7 @@ available_today =
     - planned goal contributions due this month that are not already allocated
 ```
 
-Eligible current liquid balances come from active, nonnegative accounts marked liquid. Archived accounts and investment positions are excluded. Investment-account cash and other accounts default to non-liquid; cash, bank, digital-wallet, and foreign-currency accounts default to liquid. The calculation includes only inputs in the currency being calculated. Expected income is not part of `available_today`. Results are not clamped to zero; a negative result is a projected shortfall. The explanation must identify every included input and deduction.
+Eligible current liquid balances come from active, nonnegative accounts marked liquid. Archived accounts and investment positions are excluded. Investment-account cash and other accounts default to non-liquid; cash, bank, digital-wallet, and foreign-currency accounts default to liquid. The calculation includes only inputs in the currency being calculated. Expected income is not part of `available_today`. Results are not clamped to zero; a negative result is a projected shortfall. The explanation must identify every included input and deduction. The treatment of recorded negative liquid account balances in availability is **Pending decision**; do not implement this calculation until it is resolved.
 
 The definition of a planned goal contribution being due and treatment of pending transfers and debts are **Pending decision**.
 
@@ -166,7 +168,6 @@ At minimum, the system must reject or stop calculations that would:
 - Use a currency other than ARS or USD in the MVP.
 - Mix currencies without an explicit exchange rate.
 - Consolidate reference-currency net worth without a required manually entered exchange rate.
-- Store a negative account balance or overdraft.
 - Include an archived account in a calculation or create a new allocation from it.
 - Create an allocation whose source account, allocation, and goal currencies differ.
 - Allocate more than the unallocated eligible balance of the specified source account.

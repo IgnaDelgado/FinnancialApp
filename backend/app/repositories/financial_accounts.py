@@ -37,10 +37,14 @@ class FinancialAccountRepository:
         )
         return self._session.scalar(statement)
 
-    def list_snapshots(self, account_id: UUID) -> list[AccountBalanceSnapshot]:
+    def list_snapshots(
+        self, account_id: UUID, *, limit: int, offset: int
+    ) -> list[AccountBalanceSnapshot]:
         statement = (
             select(AccountBalanceSnapshot)
             .where(AccountBalanceSnapshot.account_id == account_id)
             .order_by(AccountBalanceSnapshot.recorded_at, AccountBalanceSnapshot.id)
+            .limit(limit)
+            .offset(offset)
         )
         return list(self._session.scalars(statement).all())

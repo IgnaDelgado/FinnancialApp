@@ -63,7 +63,7 @@ Implement ARS and USD accounts, current balances, historical balance snapshots, 
 - Account responses and operations enforce ownership.
 - Investment-account balances represent cash only and never include position value.
 - Cash, bank, digital-wallet, and foreign-currency accounts default to liquid; investment-account cash and other accounts default to non-liquid.
-- Negative balances and overdrafts are rejected.
+- Negative balances and overdrafts can be recorded in accounts and their history.
 - Referenced accounts are archived instead of deleted, are excluded from calculations, and cannot receive new allocations.
 - Balance updates create historical snapshots.
 - The mobile app can list, create, and update accounts and cash balances.

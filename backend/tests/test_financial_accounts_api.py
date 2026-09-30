@@ -97,7 +97,55 @@ def test_update_balance_records_history_without_replacing_prior_snapshot(
     assert [item["balance"] for item in history.json()] == ["1250.25", "999.99"]
 
 
-def test_rejects_negative_imprecise_or_unsupported_account_values(
+def test_balance_history_can_be_read_in_bounded_pages(
+    api_client: TestClient, database_session: Session
+) -> None:
+    headers = _headers(database_session, "pages@example.com")
+    created = _create_account(api_client, headers)
+    account_url = f"/api/v1/accounts/{created['id']}"
+    for balance in ("2.00", "3.00"):
+        response = api_client.patch(
+            f"{account_url}/balance", json={"balance": balance}, headers=headers
+        )
+        assert response.status_code == 200
+
+    first = api_client.get(f"{account_url}/balance-history?limit=2", headers=headers)
+    second = api_client.get(
+        f"{account_url}/balance-history?limit=2&offset=2", headers=headers
+    )
+
+    assert [item["balance"] for item in first.json()] == ["1250.25", "2.00"]
+    assert [item["balance"] for item in second.json()] == ["3.00"]
+    assert (
+        api_client.get(
+            f"{account_url}/balance-history?limit=101", headers=headers
+        ).status_code
+        == 422
+    )
+
+
+def test_negative_balance_is_preserved_in_account_and_history(
+    api_client: TestClient, database_session: Session
+) -> None:
+    headers = _headers(database_session, "overdraft@example.com")
+    created = _create_account(api_client, headers, balance="-25000.75")
+    account_id = str(created["id"])
+    updated = api_client.patch(
+        f"/api/v1/accounts/{account_id}/balance",
+        json={"balance": "-50000.01"},
+        headers=headers,
+    )
+    history = api_client.get(
+        f"/api/v1/accounts/{account_id}/balance-history", headers=headers
+    )
+
+    assert created["current_balance"] == "-25000.75"
+    assert updated.status_code == 200
+    assert updated.json()["current_balance"] == "-50000.01"
+    assert [item["balance"] for item in history.json()] == ["-25000.75", "-50000.01"]
+
+
+def test_rejects_imprecise_or_unsupported_account_values(
     api_client: TestClient, database_session: Session
 ) -> None:
     headers = _headers(database_session, "validation@example.com")
@@ -108,8 +156,8 @@ def test_rejects_negative_imprecise_or_unsupported_account_values(
         "initial_balance": "10.00",
     }
     invalid_changes = (
-        {"initial_balance": "-0.01"},
         {"initial_balance": "1.001"},
+        {"initial_balance": "-1.001"},
         {"initial_balance": "1000000000000000000.00"},
         {"currency": "EUR"},
         {"account_type": "BROKER_TOTAL"},

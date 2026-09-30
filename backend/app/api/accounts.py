@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_database_session
@@ -84,10 +84,12 @@ def read_account_balance_history(
     account_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[Session, Depends(get_database_session)],
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ) -> list[AccountBalanceSnapshotResponse]:
     try:
         snapshots = FinancialAccountService(session).list_balance_history(
-            user_id=current_user.id, account_id=account_id
+            user_id=current_user.id, account_id=account_id, limit=limit, offset=offset
         )
     except AccountNotFoundError as exc:
         raise _account_not_found() from exc

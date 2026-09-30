@@ -44,7 +44,7 @@ the initial requirement or **Pending decision**.
 
 ### Financial accounts
 
-Users manually create cash, bank, digital-wallet, foreign-currency, investment, and other accounts in ARS or USD. Cash, bank, digital-wallet, and foreign-currency accounts are liquid by default; investment-account cash and other accounts are non-liquid by default. Investment positions are never liquid. Negative balances and overdrafts are not supported in the MVP.
+Users manually create cash, bank, digital-wallet, foreign-currency, investment, and other accounts in ARS or USD. Cash, bank, digital-wallet, and foreign-currency accounts are liquid by default; investment-account cash and other accounts are non-liquid by default. Investment positions are never liquid. Accounts may record negative balances, including overdrafts; the same overdraft must not also be counted as a separate liability.
 
 Each account records its name, type, currency, current balance, update time, and whether it is liquid and available for spending. Balance updates create historical snapshots. Referenced accounts are archived rather than deleted; archived accounts are excluded from calculations and cannot receive new allocations. An investment account's balance represents cash only, while its positions are valued separately.
 

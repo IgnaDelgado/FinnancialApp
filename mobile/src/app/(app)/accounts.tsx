@@ -50,6 +50,7 @@ export default function AccountsScreen() {
   const [currency, setCurrency] = useState<Currency>('ARS');
   const [isLiquid, setIsLiquid] = useState(true);
   const [balance, setBalance] = useState('');
+  const [isNegative, setIsNegative] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,6 +75,7 @@ export default function AccountsScreen() {
     setCurrency(session?.user.reference_currency ?? 'ARS');
     setIsLiquid(true);
     setBalance('');
+    setIsNegative(false);
     setSelected(null);
     setEditor('create');
     setError(null);
@@ -81,7 +83,8 @@ export default function AccountsScreen() {
 
   function openBalance(account: FinancialAccount) {
     setSelected(account);
-    setBalance(account.current_balance);
+    setBalance(account.current_balance.replace(/^-/, ''));
+    setIsNegative(account.current_balance.startsWith('-'));
     setEditor('balance');
     setError(null);
   }
@@ -89,9 +92,12 @@ export default function AccountsScreen() {
   async function save() {
     const normalizedBalance = normalizeMoneyInput(balance);
     if (!normalizedBalance) {
-      setError('Ingresá un saldo positivo o cero, con hasta dos decimales.');
+      setError('Ingresá un importe válido, con hasta dos decimales.');
       return;
     }
+    const signedBalance = isNegative && !/^0(?:\.0{1,2})?$/.test(normalizedBalance)
+      ? `-${normalizedBalance}`
+      : normalizedBalance;
     if (editor === 'create' && !name.trim()) {
       setError('Ingresá un nombre para la cuenta.');
       return;
@@ -102,11 +108,11 @@ export default function AccountsScreen() {
       if (editor === 'create') {
         await withAccessToken((token) => createAccount(token, {
           name: name.trim(), account_type: accountType, currency,
-          initial_balance: normalizedBalance, is_liquid: isLiquid,
+          initial_balance: signedBalance, is_liquid: isLiquid,
         }));
       } else if (editor === 'balance' && selected) {
         await withAccessToken((token) =>
-          updateAccountBalance(token, selected.id, normalizedBalance),
+          updateAccountBalance(token, selected.id, signedBalance),
         );
       }
       await reload();
@@ -210,12 +216,31 @@ export default function AccountsScreen() {
             <TextInput
               accessibilityLabel="Saldo actual"
               keyboardType="decimal-pad"
-              onChangeText={setBalance}
+              onChangeText={(value) => {
+                if (value.startsWith('-')) {
+                  setIsNegative(true);
+                  setBalance(value.slice(1));
+                } else {
+                  setBalance(value);
+                }
+              }}
               placeholder="0,00"
               placeholderTextColor={colors.muted}
               style={styles.input}
               value={balance}
             />
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: isNegative }}
+              onPress={() => setIsNegative(!isNegative)}
+              style={styles.liquidRow}
+            >
+              <View style={[styles.checkbox, isNegative && styles.checkboxChecked]} />
+              <View style={styles.liquidCopy}>
+                <Text style={styles.liquidTitle}>Saldo negativo (en rojo)</Text>
+                <Text style={styles.liquidDescription}>Activá esta opción si la cuenta debe dinero.</Text>
+              </View>
+            </Pressable>
             {editor === 'create' ? (
               <Pressable
                 accessibilityRole="checkbox"

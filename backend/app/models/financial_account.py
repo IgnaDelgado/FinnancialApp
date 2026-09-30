@@ -26,9 +26,6 @@ class FinancialAccount(Base):
     __tablename__ = "financial_accounts"
     __table_args__ = (
         CheckConstraint(
-            "current_balance >= 0", name="ck_financial_accounts_nonnegative_balance"
-        ),
-        CheckConstraint(
             "length(trim(name)) > 0", name="ck_financial_accounts_name_not_blank"
         ),
     )
@@ -61,20 +58,12 @@ class FinancialAccount(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    )
 
 
 class AccountBalanceSnapshot(Base):
     """A recorded balance at the time an account was created or updated."""
 
     __tablename__ = "account_balance_snapshots"
-    __table_args__ = (
-        CheckConstraint(
-            "balance >= 0", name="ck_account_balance_snapshots_nonnegative_balance"
-        ),
-    )
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
     account_id: Mapped[UUID] = mapped_column(
