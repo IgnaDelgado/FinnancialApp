@@ -48,6 +48,8 @@ Users manually create cash, bank, digital-wallet, foreign-currency, investment, 
 
 Each account records its name, type, currency, current balance, update time, and whether it is liquid and available for spending. Balance updates create historical snapshots. Referenced accounts are archived rather than deleted; archived accounts are excluded from calculations and cannot receive new allocations. An investment account's balance represents cash only, while its positions are valued separately.
 
+The account view shows each signed balance and a separate signed total of active account cash per currency. This total is not net worth or safe-to-spend money. A negative account does not automatically reduce the positive liquid balance of another account in the availability calculation; the shortfall remains visible and is explained.
+
 ### Income, commitments, and flexible budgets
 
 Users record one-time or monthly income with an expected date and a status of `PLANNED`, `RECEIVED`, or `CANCELLED`. Only `PLANNED` income dated from today through month end qualifies for the month-end forecast. Overdue planned income is excluded and generates a warning. Expected income is never treated as received money.

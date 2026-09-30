@@ -26,6 +26,8 @@ Creating an account records its initial balance as the first snapshot. Updating 
 
 Balance-history reads are paginated in chronological order by timestamp and snapshot ID. The API returns at most 50 snapshots by default, or up to 100 when requested; clients can request later pages with an offset. Pagination limits each response, but does not discard historical records or reduce database storage.
 
+The displayed **total account cash balance** is calculated independently for each currency by summing the current signed balances of active accounts once. It includes non-liquid account cash, but excludes archived accounts, historical snapshots, investment positions, other assets, and separate liabilities. It is neither net worth nor available-to-spend money. Individual account balances remain visible alongside the total. For example, an ARS 30,000 wallet and an ARS -20,000 bank account display individually and produce an ARS 10,000 total account cash balance.
+
 ## Money, Precision, and Rounding
 
 Financial calculations use Python `Decimal`; binary floating point must never be used for money. PostgreSQL precision is:
@@ -68,7 +70,9 @@ available_today =
     - planned goal contributions due this month that are not already allocated
 ```
 
-Eligible current liquid balances come from active, nonnegative accounts marked liquid. Archived accounts and investment positions are excluded. Investment-account cash and other accounts default to non-liquid; cash, bank, digital-wallet, and foreign-currency accounts default to liquid. The calculation includes only inputs in the currency being calculated. Expected income is not part of `available_today`. Results are not clamped to zero; a negative result is a projected shortfall. The explanation must identify every included input and deduction. The treatment of recorded negative liquid account balances in availability is **Pending decision**; do not implement this calculation until it is resolved.
+Eligible current liquid balances come from active accounts marked liquid, counting only each positive balance. A negative account balance does not cancel positive money held in another account for this calculation; it remains visible in the account list and signed total account cash balance, with an explicit shortfall warning in the future availability explanation. Archived accounts and investment positions are excluded. Investment-account cash and other accounts default to non-liquid; cash, bank, digital-wallet, and foreign-currency accounts default to liquid. The calculation includes only inputs in the currency being calculated. Expected income is not part of `available_today`. Results are not clamped to zero; a negative result after deductions is a projected shortfall. The explanation must identify every included input and deduction.
+
+Synthetic example: an ARS 30,000 liquid wallet and an ARS -20,000 liquid bank account contribute ARS 30,000 of eligible positive balances to `available_today`, before any allocations, commitments, budgets, or planned contributions are deducted. The signed total account cash balance is ARS 10,000. The negative bank balance must be disclosed, not silently omitted or deducted a second time.
 
 The definition of a planned goal contribution being due and treatment of pending transfers and debts are **Pending decision**.
 

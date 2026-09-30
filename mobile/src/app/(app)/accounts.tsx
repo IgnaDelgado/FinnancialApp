@@ -16,8 +16,10 @@ import { ApiError } from '@/auth/api';
 import { useAuth } from '@/auth/AuthProvider';
 import {
   createAccount,
+  getAccountCashTotals,
   listAccounts,
   updateAccountBalance,
+  type AccountCashTotal,
   type AccountType,
   type Currency,
   type FinancialAccount,
@@ -42,6 +44,7 @@ const DEFAULT_LIQUID_TYPES: AccountType[] = [
 export default function AccountsScreen() {
   const { session, withAccessToken } = useAuth();
   const [accounts, setAccounts] = useState<FinancialAccount[] | null>(null);
+  const [cashTotals, setCashTotals] = useState<AccountCashTotal[]>([]);
   const [loading, setLoading] = useState(true);
   const [editor, setEditor] = useState<'create' | 'balance' | null>(null);
   const [selected, setSelected] = useState<FinancialAccount | null>(null);
@@ -55,16 +58,19 @@ export default function AccountsScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
-    const result = await withAccessToken(listAccounts);
-    setAccounts(result);
+    const [accountResult, totalResult] = await withAccessToken((token) =>
+      Promise.all([listAccounts(token), getAccountCashTotals(token)]),
+    );
+    setAccounts(accountResult);
+    setCashTotals(totalResult);
   }, [withAccessToken]);
 
   useFocusEffect(useCallback(() => {
     if (!session) return;
     let active = true;
     setLoading(true);
-    void withAccessToken(listAccounts)
-      .then((result) => { if (active) { setAccounts(result); setError(null); setLoading(false); } })
+    void withAccessToken((token) => Promise.all([listAccounts(token), getAccountCashTotals(token)]))
+      .then(([accountResult, totalResult]) => { if (active) { setAccounts(accountResult); setCashTotals(totalResult); setError(null); setLoading(false); } })
       .catch((caught) => { if (active) { setError(errorMessage(caught)); setLoading(false); } });
     return () => { active = false; };
   }, [session, withAccessToken]));
@@ -280,6 +286,20 @@ export default function AccountsScreen() {
           </View>
         ) : (
           <View style={styles.list}>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryTitle}>Saldo total de cuentas</Text>
+              {cashTotals.map((total) => (
+                <Text
+                  key={total.currency}
+                  style={[styles.summaryAmount, total.balance.startsWith('-') && styles.negativeBalance]}
+                >
+                  {formatMoney(total.balance, total.currency)}
+                </Text>
+              ))}
+              <Text style={styles.summaryHelp}>
+                Suma saldos positivos y negativos por moneda. No es el dinero disponible para gastar ni el patrimonio neto.
+              </Text>
+            </View>
             <Text style={styles.sectionTitle}>Cuentas activas</Text>
             {accounts.map((account) => (
               <Pressable key={account.id} onPress={() => openBalance(account)} style={styles.accountCard}>
@@ -287,11 +307,11 @@ export default function AccountsScreen() {
                 <View style={styles.accountCopy}>
                   <Text style={styles.accountName}>{account.name}</Text>
                   <Text style={styles.accountMeta}>
-                    {ACCOUNT_TYPES.find((item) => item.value === account.account_type)?.label} · {account.is_liquid ? 'Disponible' : 'No disponible para gastos'}
+                    {ACCOUNT_TYPES.find((item) => item.value === account.account_type)?.label} · {account.current_balance.startsWith('-') ? 'Saldo en rojo' : account.is_liquid ? 'Cuenta líquida' : 'No líquida'}
                   </Text>
                 </View>
                 <View style={styles.accountEnd}>
-                  <Text style={styles.accountBalance}>{formatMoney(account.current_balance, account.currency)}</Text>
+                  <Text style={[styles.accountBalance, account.current_balance.startsWith('-') && styles.negativeBalance]}>{formatMoney(account.current_balance, account.currency)}</Text>
                   <RefreshCw color={colors.muted} size={14} />
                 </View>
                 <ChevronRight color={colors.muted} size={16} />
@@ -344,6 +364,11 @@ const styles = StyleSheet.create({
   emptyAction: { backgroundColor: colors.paleGreen, borderRadius: 12, marginTop: 6, minHeight: 44, paddingHorizontal: 14, paddingVertical: 12 },
   emptyActionText: { color: colors.forest, fontFamily: fontFamily.bold, fontSize: 13 },
   list: { gap: 10 },
+  summaryCard: { backgroundColor: colors.paleGreen, borderRadius: 20, gap: 5, padding: 18 },
+  summaryTitle: { color: colors.slate, fontFamily: fontFamily.semibold, fontSize: 13 },
+  summaryAmount: { color: colors.forestDeep, fontFamily: fontFamily.displayBold, fontSize: 24 },
+  summaryHelp: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 11, lineHeight: 16, marginTop: 4 },
+  negativeBalance: { color: colors.coral },
   sectionTitle: { color: colors.ink, fontFamily: fontFamily.displayMedium, fontSize: 17 },
   accountCard: { alignItems: 'center', backgroundColor: colors.white, borderColor: colors.line, borderRadius: 18, borderWidth: 1, flexDirection: 'row', gap: 9, minHeight: 78, padding: 12 },
   accountIcon: { alignItems: 'center', backgroundColor: colors.paleGreen, borderRadius: 12, height: 40, justifyContent: 'center', width: 40 },

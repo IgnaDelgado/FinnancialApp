@@ -28,6 +28,11 @@ class AccountBalanceUpdateRequest(BaseModel):
     balance: Decimal = Field(max_digits=20, decimal_places=2)
 
 
+class AccountCashTotalResponse(BaseModel):
+    currency: Currency
+    balance: Decimal
+
+
 class AccountResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

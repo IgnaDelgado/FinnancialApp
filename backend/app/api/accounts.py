@@ -5,10 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_database_session
+from app.domain.currency import Currency
 from app.models.user import User
 from app.schemas.accounts import (
     AccountBalanceSnapshotResponse,
     AccountBalanceUpdateRequest,
+    AccountCashTotalResponse,
     AccountCreateRequest,
     AccountResponse,
 )
@@ -44,6 +46,19 @@ def list_accounts(
 ) -> list[AccountResponse]:
     accounts = FinancialAccountService(session).list_active(current_user.id)
     return [AccountResponse.model_validate(account) for account in accounts]
+
+
+@router.get("/totals", response_model=list[AccountCashTotalResponse])
+def read_account_cash_totals(
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_database_session)],
+) -> list[AccountCashTotalResponse]:
+    totals = FinancialAccountService(session).cash_totals(current_user.id)
+    return [
+        AccountCashTotalResponse(currency=currency, balance=totals[currency])
+        for currency in Currency
+        if currency in totals
+    ]
 
 
 @router.get("/{account_id}", response_model=AccountResponse)

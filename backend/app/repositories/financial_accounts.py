@@ -1,8 +1,10 @@
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.domain.currency import Currency
 from app.models.financial_account import AccountBalanceSnapshot, FinancialAccount
 
 
@@ -28,6 +30,18 @@ class FinancialAccountRepository:
             .order_by(FinancialAccount.created_at, FinancialAccount.id)
         )
         return list(self._session.scalars(statement).all())
+
+    def list_active_balances(self, user_id: UUID) -> list[tuple[Currency, Decimal]]:
+        statement = select(
+            FinancialAccount.currency, FinancialAccount.current_balance
+        ).where(
+            FinancialAccount.user_id == user_id,
+            FinancialAccount.archived_at.is_(None),
+        )
+        return [
+            (currency, balance)
+            for currency, balance in self._session.execute(statement)
+        ]
 
     def get_active(self, user_id: UUID, account_id: UUID) -> FinancialAccount | None:
         statement = select(FinancialAccount).where(

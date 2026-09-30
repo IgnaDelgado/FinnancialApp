@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.domain.account import DEFAULT_LIQUID_ACCOUNT_TYPES, AccountType
+from app.domain.account_totals import sum_account_balances
 from app.domain.currency import Currency
 from app.models.financial_account import AccountBalanceSnapshot, FinancialAccount
 from app.repositories.financial_accounts import FinancialAccountRepository
@@ -56,6 +57,9 @@ class FinancialAccountService:
 
     def list_active(self, user_id: UUID) -> list[FinancialAccount]:
         return self._accounts.list_active(user_id)
+
+    def cash_totals(self, user_id: UUID) -> dict[Currency, Decimal]:
+        return sum_account_balances(self._accounts.list_active_balances(user_id))
 
     def get_active(self, user_id: UUID, account_id: UUID) -> FinancialAccount:
         account = self._accounts.get_active(user_id, account_id)

@@ -22,6 +22,11 @@ export type FinancialAccount = {
   created_at: string;
 };
 
+export type AccountCashTotal = {
+  currency: Currency;
+  balance: string;
+};
+
 export type CreateAccountInput = {
   name: string;
   account_type: AccountType;
@@ -32,6 +37,10 @@ export type CreateAccountInput = {
 
 export function listAccounts(accessToken: string): Promise<FinancialAccount[]> {
   return request<FinancialAccount[]>('/api/v1/accounts', { accessToken });
+}
+
+export function getAccountCashTotals(accessToken: string): Promise<AccountCashTotal[]> {
+  return request<AccountCashTotal[]>('/api/v1/accounts/totals', { accessToken });
 }
 
 export function createAccount(

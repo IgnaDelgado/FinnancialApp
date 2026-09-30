@@ -145,6 +145,50 @@ def test_negative_balance_is_preserved_in_account_and_history(
     assert [item["balance"] for item in history.json()] == ["-25000.75", "-50000.01"]
 
 
+def test_account_cash_totals_are_signed_currency_scoped_and_owner_scoped(
+    api_client: TestClient, database_session: Session
+) -> None:
+    owner_headers = _headers(database_session, "totals-owner@example.com")
+    other_headers = _headers(database_session, "totals-other@example.com")
+    positive = _create_account(api_client, owner_headers, balance="30000.00")
+    debt = _create_account(api_client, owner_headers, balance="-20000.00")
+    _create_account(api_client, owner_headers, currency="USD", balance="5.25")
+    _create_account(api_client, other_headers, balance="999999.00")
+
+    totals = api_client.get("/api/v1/accounts/totals", headers=owner_headers)
+    assert totals.status_code == 200
+    assert totals.json() == [
+        {"currency": "ARS", "balance": "10000.00"},
+        {"currency": "USD", "balance": "5.25"},
+    ]
+
+    assert (
+        api_client.patch(
+            f"/api/v1/accounts/{positive['id']}/balance",
+            json={"balance": "31000.00"},
+            headers=owner_headers,
+        ).status_code
+        == 200
+    )
+    assert api_client.get("/api/v1/accounts/totals", headers=owner_headers).json()[
+        0
+    ] == {"currency": "ARS", "balance": "11000.00"}
+
+    assert (
+        api_client.delete(
+            f"/api/v1/accounts/{debt['id']}", headers=owner_headers
+        ).status_code
+        == 204
+    )
+    assert api_client.get("/api/v1/accounts/totals", headers=owner_headers).json() == [
+        {"currency": "ARS", "balance": "31000.00"},
+        {"currency": "USD", "balance": "5.25"},
+    ]
+    assert api_client.get("/api/v1/accounts/totals", headers=other_headers).json() == [
+        {"currency": "ARS", "balance": "999999.00"}
+    ]
+
+
 def test_rejects_imprecise_or_unsupported_account_values(
     api_client: TestClient, database_session: Session
 ) -> None:
@@ -237,6 +281,7 @@ def test_archived_account_disappears_from_active_operations_but_retains_records(
 
 def test_accounts_require_authentication(api_client: TestClient) -> None:
     assert api_client.get("/api/v1/accounts").status_code == 401
+    assert api_client.get("/api/v1/accounts/totals").status_code == 401
     assert (
         api_client.post(
             "/api/v1/accounts",
