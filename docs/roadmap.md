@@ -262,3 +262,12 @@ Post-MVP work is considered only after MVP behavior is stable and each external 
 7. Cited financial news and AI summaries that separate facts, interpretation, and uncertainty.
 
 No provider, API, or integration is selected or available yet. WhatsApp is the fixed first post-MVP product feature; provider selection, legal review, technical proofs of concept, and the order of later items are **Pending decision**.
+
+## Immediate product usability priorities (2026-10-01)
+
+The new home snapshot and expense preview provide an understandable entry into
+planning, without claiming that M5 or M7 is complete. Next: finish received/paid
+status transitions, reconciliation with recorded balances, and stopping/editing
+monthly plans. Then approve and implement flexible-budget and goal-allocation
+rules so the primary result can become the complete safe-to-spend value.
+Empty goals/investment tabs stay hidden until those capabilities are usable.

@@ -55,6 +55,7 @@ export default function AccountsScreen() {
   const [selected, setSelected] = useState<FinancialAccount | null>(null);
   const [name, setName] = useState('');
   const [accountType, setAccountType] = useState<AccountType>('BANK');
+  const [otherTypes, setOtherTypes] = useState(false);
   const [currency, setCurrency] = useState<Currency>('ARS');
   const [isLiquid, setIsLiquid] = useState(true);
   const [balance, setBalance] = useState('');
@@ -208,14 +209,14 @@ export default function AccountsScreen() {
               <ArrowLeft color={colors.ink} size={20} />
             </Pressable>
           </Link>
-          <Text style={styles.title}>Tus cuentas</Text>
+          <Text style={styles.title}>Mi dinero</Text>
           <Pressable accessibilityLabel="Agregar cuenta" onPress={openCreate} style={styles.addButton}>
             <Plus color={colors.white} size={20} />
           </Pressable>
         </View>
 
         <Text style={styles.intro}>
-          Registrá dónde está tu dinero. Las inversiones se cargarán por separado; una cuenta de inversión guarda solo su efectivo.
+          Sumá tu banco, billetera o efectivo y cuánto tenés hoy. Actualizá el saldo cuando cambie, sin registrar cada compra.
         </Text>
 
         {error ? <NoticeBanner message={error} /> : null}
@@ -244,9 +245,9 @@ export default function AccountsScreen() {
                   style={styles.input}
                   value={name}
                 />
-                <Text style={styles.fieldLabel}>Tipo de cuenta</Text>
+                <Text style={styles.fieldLabel}>Dónde está</Text>
                 <View style={styles.choices}>
-                  {ACCOUNT_TYPES.map((option) => (
+                  {ACCOUNT_TYPES.filter((option) => otherTypes || ['CASH', 'BANK', 'DIGITAL_WALLET'].includes(option.value) || option.value === accountType).map((option) => (
                     <Pressable
                       accessibilityRole="radio"
                       accessibilityState={{ selected: accountType === option.value }}
@@ -264,6 +265,7 @@ export default function AccountsScreen() {
                     </Pressable>
                   ))}
                 </View>
+                <Pressable accessibilityRole="button" accessibilityState={{ expanded: otherTypes }} style={styles.choice} onPress={() => setOtherTypes(!otherTypes)}><Text style={styles.choiceText}>{otherTypes ? 'Mostrar tipos habituales' : 'Otros tipos de cuenta'}</Text></Pressable>
                 <Text style={styles.fieldLabel}>Moneda</Text>
                 <View style={styles.choices}>
                   {(['ARS', 'USD'] as const).map((option) => (
@@ -376,7 +378,7 @@ export default function AccountsScreen() {
         ) : accounts.length === 0 ? (
           <View style={styles.emptyCard}>
             <WalletCards color={colors.forest} size={27} />
-            <Text style={styles.emptyTitle}>Empezá por una cuenta</Text>
+            <Text style={styles.emptyTitle}>¿Dónde tenés tu dinero?</Text>
             <Text style={styles.emptyCopy}>Puede ser efectivo, banco o billetera. Después podrás ver tus saldos organizados por moneda.</Text>
             {!editor ? <Pressable onPress={openCreate} style={styles.emptyAction}><Text style={styles.emptyActionText}>Agregar cuenta</Text></Pressable> : null}
           </View>
@@ -403,7 +405,7 @@ export default function AccountsScreen() {
                 <View style={styles.accountCopy}>
                   <Text style={styles.accountName}>{account.name}</Text>
                   <Text style={styles.accountMeta}>
-                    {ACCOUNT_TYPES.find((item) => item.value === account.account_type)?.label} · {account.current_balance.startsWith('-') ? 'Saldo en rojo' : account.is_liquid ? 'Cuenta líquida' : 'No líquida'}
+                    {ACCOUNT_TYPES.find((item) => item.value === account.account_type)?.label} · {account.current_balance.startsWith('-') ? 'Saldo en rojo' : account.is_liquid ? 'Para uso diario' : 'Fuera del uso diario'}
                   </Text>
                 </View>
                 <View style={styles.accountEnd}>

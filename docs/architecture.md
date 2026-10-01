@@ -188,3 +188,19 @@ changes still require rebuilding the backend image; missing planning routes on
 an old image return 404. The mobile client translates that specific failure into
 an actionable backend-update message. Additive migrations preserve one-time
 records. Downgrade refuses to remove monthly tables when templates exist.
+
+## Home snapshot and expense preview
+
+GET /api/v1/home uses authenticated ownership and the current Argentina financial
+date. HomeService materializes current monthly planning records; HomeRepository
+reads all relevant owned balances and planned events, independently of UI
+pagination. Pure cash_flow_snapshot computes a limited diagnostic using Decimal.
+Responses serialize decimal strings. This additive API needs no schema migration.
+
+The mobile home uses a currency selector (reference currency by default), a
+current-money card, payment/income breakdown, separate forecast and a local
+expense preview using bigint cents. It discards obsolete reads on focus/auth
+changes. No preview request or financial mutation is sent to the backend.
+Navigation hides unfinished goal/investment routes while preserving their files.
+The three visible tabs are Inicio, Mi plan and Perfil. Safe-area-aware tab height
+keeps labels visible. Existing account management remains directly accessible.

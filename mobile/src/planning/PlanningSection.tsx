@@ -86,17 +86,19 @@ export function PlanningSection({ kind, today, period }: { kind: PlanningKind; t
 
   const income = kind === 'income';
   return <View style={styles.card}>
-    <Text accessibilityRole="header" style={styles.title}>{income ? 'Ingresos esperados' : 'Gastos y compromisos'}</Text>
-    <Text style={styles.help}>{income ? 'Dinero que esperás cobrar. Registrarlo no aumenta el saldo de tus cuentas.' : 'Obligaciones que debés pagar. Registrarlas no ejecuta un pago ni cambia tus cuentas.'}</Text>
+    <Text accessibilityRole="header" style={styles.title}>{income ? 'Tus próximos cobros' : 'Tus próximos pagos'}</Text>
+    <Text style={styles.help}>{income ? 'Sueldo, trabajos o un ingreso extra.' : 'Alquiler, servicios, tarjeta y otros pagos importantes.'}</Text>
     {message && <Text accessibilityRole="alert" style={styles.help}>{message}</Text>}
     <Pressable accessibilityRole="button" disabled={saving} style={styles.button} onPress={() => { setEditor(!editor); setFormError(null); setMessage(null); }}>
-      <Text style={styles.buttonText}>{editor ? 'Cerrar formulario' : income ? 'Agregar ingreso' : 'Agregar gasto o compromiso'}</Text>
+      <Text style={styles.buttonText}>{editor ? 'Cerrar formulario' : income ? 'Agregar ingreso' : 'Agregar pago'}</Text>
     </Pressable>
     {editor && <View style={styles.form}>
+      <Text style={styles.help}>Empezá con un ejemplo</Text>
+      <View style={styles.row}>{(income ? ['Sueldo', 'Trabajo', 'Otro'] : ['Alquiler', 'Servicios', 'Tarjeta']).map((label) => <Pressable key={label} accessibilityRole="button" disabled={saving} style={[styles.button, styles.flex]} onPress={() => { setDescription(label); setRecurrence(label === 'Trabajo' || label === 'Otro' ? 'ONE_TIME' : 'MONTHLY'); }}><Text style={styles.buttonText}>{label}</Text></Pressable>)}</View>
       <Text style={styles.help}>Frecuencia</Text>
       <View style={styles.row}>{([{value: 'ONE_TIME', label: 'Una vez'}, {value: 'MONTHLY', label: 'Todos los meses'}] as const).map((option) => <Pressable key={option.value} accessibilityRole="button" accessibilityState={{selected: recurrence === option.value}} disabled={saving} onPress={() => setRecurrence(option.value)} style={[styles.button, styles.flex, recurrence === option.value && styles.selected]}><Text style={styles.buttonText}>{option.label}</Text></Pressable>)}</View>
       <FormField icon={null} label="Descripción" value={description} onChangeText={setDescription} editable={!saving} maxLength={100} placeholder={income ? 'Ej.: trabajo freelance' : 'Ej.: alquiler'} />
-      <FormField icon={null} label="Importe (sin separadores de miles)" value={amount} onChangeText={setAmount} editable={!saving} keyboardType="decimal-pad" placeholder="Ej.: 15000,50" />
+      <FormField icon={null} label="Importe" value={amount} onChangeText={setAmount} editable={!saving} keyboardType="decimal-pad" placeholder="Ej.: 15000,50" />
       <Text style={styles.help}>Moneda</Text>
       <View style={styles.row}>{(['ARS', 'USD'] as const).map((value) => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: currency === value }} disabled={saving} onPress={() => setCurrency(value)} style={[styles.button, styles.flex, currency === value && styles.selected]}><Text style={styles.buttonText}>{value}</Text></Pressable>)}</View>
       <FormField icon={null} label={recurrence === 'MONTHLY' ? 'Primera fecha (DD/MM/AAAA)' : income ? 'Fecha esperada (DD/MM/AAAA)' : 'Vencimiento (DD/MM/AAAA)'} value={date} onChangeText={setDate} editable={!saving} autoCapitalize="none" maxLength={10} placeholder="15/10/2026" />
@@ -107,7 +109,7 @@ export function PlanningSection({ kind, today, period }: { kind: PlanningKind; t
       {formError && <NoticeBanner message={formError} />}
       <PrimaryButton label={recurrence === 'MONTHLY' ? 'Guardar repetición mensual' : income ? 'Guardar ingreso' : 'Guardar compromiso'} loading={saving} onPress={() => { void save(); }} />
     </View>}
-    {loading ? <ActivityIndicator accessibilityLabel="Cargando registros" color={colors.forest} /> : loadError ? <><NoticeBanner message={loadError} /><Pressable accessibilityRole="button" style={styles.button} onPress={() => reload()}><Text style={styles.buttonText}>Reintentar</Text></Pressable></> : records.length === 0 ? <Text style={styles.help}>No hay registros en esta página para el mes ni pendientes anteriores.</Text> : records.map((record) => <View key={record.id} style={styles.entry}>
+    {loading ? <ActivityIndicator accessibilityLabel="Cargando registros" color={colors.forest} /> : loadError ? <><NoticeBanner message={loadError} /><Pressable accessibilityRole="button" style={styles.button} onPress={() => reload()}><Text style={styles.buttonText}>Reintentar</Text></Pressable></> : records.length === 0 ? <Text style={styles.help}>Todavía no tenés planes en esta página. Empezá con un cobro o pago importante.</Text> : records.map((record) => <View key={record.id} style={styles.entry}>
       <Text style={styles.name}>{record.description}</Text>
       <Text style={styles.amount}>{formatMoney(record.amount, record.currency)}</Text>
       <Text style={styles.help}>{displayFinancialDate(recordDate(record))} · Pendiente · {record.recurrence === 'MONTHLY' ? 'Mensual' : 'Por única vez'}</Text>

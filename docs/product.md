@@ -42,7 +42,7 @@ every user-owned resource is isolated from other users. Social login,
 multi-factor authentication, and the exact account-recovery flow are outside
 the initial requirement or **Pending decision**.
 
-Registration explains invalid email syntax, password-length and confirmation errors before submission. A duplicate email produces an explicit conflict message. The current Accounts tab shows recorded balances only; Profile has its own tab for user details and logout. Tu mes supports the first M3 slice described below. Goals and Investments remain coming soon. No unavailable financial metric is shown as if it were implemented.
+Registration explains invalid email syntax, password-length and confirmation errors before submission. A duplicate email produces an explicit conflict message. The current navigation has Inicio, Mi plan and Perfil. Inicio explains the month with a limited cash-flow snapshot and an additional-expense preview; Mi dinero manages accounts outside the tab bar. Mi plan supports the M3 slice described below. Goals and Investments remain in the roadmap and are hidden from navigation until usable. No unavailable financial metric is shown as if it were implemented.
 
 ### Financial accounts
 
@@ -160,3 +160,27 @@ Numeric adoption, retention, accuracy, and performance targets are **Pending dec
 - Whether non-investment assets and liabilities require dedicated MVP interfaces.
 - Exact success metrics and measurement periods.
 - Whether export and deletion are required for private testing or only before public launch.
+
+## Simpler product entry (2026-10-01)
+
+The initial audience is a person with income and major fixed bills who wants to
+understand the month without maintaining a daily purchase ledger. The first
+interaction asks for existing cash balances; the second records major bills,
+with monthly repetitions. There is no mandatory exhaustive expense entry.
+
+Inicio answers what remains after registered pending bills, shows the balance
+and bill components, and separates expected-income projections. A lightweight
+additional-expense preview makes consequences observable without saving data.
+The exact diagnostic and exclusions are specified in financial-rules.md. It is
+not the complete safe-to-spend calculation: budgets and goals are not silently
+assumed to be zero. The empty state presents a concrete two-step start instead
+of an unexplained financial zero. Navigation exposes only working areas.
+
+Mi plan separates payments and income, uses familiar presets (rent, services,
+card, salary) and keeps advanced recurrence explanations in the form. Mi dinero
+uses everyday wording in place of liquidity jargon. No existing records are
+migrated or deleted by the redesign.
+
+Full available-money and goal effects remain the product destination. Before
+regular use beyond testing, status transitions and stopping/editing repeats
+must be completed so past paid obligations do not remain pending indefinitely.

@@ -87,7 +87,7 @@ async function readResponseBody(response: Response): Promise<unknown> {
 }
 
 function errorMessageFor(status: number, body: unknown, path: string): string {
-  if (status === 404 && (path.startsWith('/api/v1/income') || path.startsWith('/api/v1/commitments'))) {
+  if (status === 404 && (path.startsWith('/api/v1/home') || path.startsWith('/api/v1/income') || path.startsWith('/api/v1/commitments'))) {
     return 'El servidor no tiene habilitada esta función. Actualizá el backend y volvé a intentar.';
   }
   if (status === 401) return 'El correo, la contraseña o la sesión no son válidos.';

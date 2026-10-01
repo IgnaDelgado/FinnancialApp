@@ -215,3 +215,12 @@ volume. Check `/openapi.json` on the host/port configured by
 `EXPO_PUBLIC_API_URL`: it must include `/api/v1/income` and
 `/api/v1/commitments`. Reload Expo Go after updating. A host test server on
 another port does not update the Docker server used by the phone.
+
+### Start with a useful month view
+
+Inicio now shows current liquid cash minus registered pending bills through month
+end, with a separate expected-income forecast and an additional-expense preview.
+The first-use flow asks for cash balances and major bills; daily purchase logging
+is optional. Mi plan separates payments and income. Only usable areas appear in
+the tab bar. This limited snapshot is not safe-to-spend money: daily budgets,
+goal reserves and status transitions still require the remaining MVP work.
