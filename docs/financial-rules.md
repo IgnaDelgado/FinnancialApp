@@ -104,6 +104,36 @@ The MVP supports `ONE_TIME` and `MONTHLY` recurrence. Monthly templates create p
 
 The MVP financial timezone is `America/Argentina/Cordoba`. Financial dates, the meaning of today, due dates, and month boundaries use this timezone. Technical timestamps are stored in UTC and converted only for presentation or financial-date interpretation.
 
+### First M3 slice: one-time planned records
+
+Approved on 2026-10-01: income and commitment amounts must be strictly positive.
+Zero and negative inputs are rejected. Inputs must fit `NUMERIC(20,2)` and have
+no more than two decimal places, including trailing zero decimals; they are not
+rounded on entry. Decimal strings are the mobile/API money boundary; binary
+floating-point inputs are rejected. No calculation requiring rounding is added
+by this slice.
+
+Creation accepts past, present, and future valid ISO calendar dates
+(`YYYY-MM-DD`, years 0001–9999). These are financial dates, not timestamps.
+Only `ONE_TIME` records are created, always `PLANNED`. Neither creation nor
+consultation changes account balances or snapshots, receives income, or pays
+a commitment. No availability, savings, or projection is calculated.
+
+Month consultation includes the selected month's records and, by default,
+all older `PLANNED` records. Earlier pending records remain accessible after
+month rollover. Records are ordered by financial date ascending and UUID
+ascending, with a default limit of 50, maximum 100, and nonnegative offset.
+`include_overdue=false` limits consultation to the selected month. This is a
+listing policy only; it does not alter income forecast eligibility or commitment
+deductions. The mobile screen displays the current financial month, in pages
+of 20 per resource, and labels any date before financial today as overdue.
+Future-month creation is accepted and its confirmation explains that it will
+appear when that month arrives; the API can consult any supported month.
+
+Received/paid/cancelled transitions, editing, rescheduling, deletion, monthly
+recurrence, partial payments, installments, budgets, and financial calculations
+are outside this slice. Their existing pending decisions remain unchanged.
+
 ## Flexible Monthly Budget
 
 The MVP supplies daily life, activities and entertainment, and unexpected-expense categories, and permits additional categories. Detailed purchase entry is optional. Users enter aggregate flexible spending for the month.
