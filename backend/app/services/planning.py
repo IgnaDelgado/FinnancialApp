@@ -43,7 +43,7 @@ class PlanningService:
         self._records.add_monthly_plan(plan)
         return plan
 
-    def _ensure_monthly_records(
+    def ensure_monthly_records(
         self, user_id: UUID, kind: str, start: date, end: date
     ) -> None:
         current_period = financial_today().replace(day=1)
@@ -148,7 +148,7 @@ class PlanningService:
         limit: int,
         offset: int,
     ) -> list[PlannedIncome]:
-        self._ensure_monthly_records(user_id, "income", start, end)
+        self.ensure_monthly_records(user_id, "income", start, end)
         return self._records.list_income(
             user_id,
             start=start,
@@ -168,7 +168,7 @@ class PlanningService:
         limit: int,
         offset: int,
     ) -> list[PlannedCommitment]:
-        self._ensure_monthly_records(user_id, "commitments", start, end)
+        self.ensure_monthly_records(user_id, "commitments", start, end)
         return self._records.list_commitments(
             user_id,
             start=start,

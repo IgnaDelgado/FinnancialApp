@@ -243,3 +243,26 @@ At minimum, the system must reject or stop calculations that would:
 - Modify a confirmed monthly close without first recording an explicit reopen.
 
 Error wording, validation timing, and recovery behavior are **Pending decision**.
+## Home cash-flow snapshot (2026-10-01)
+
+The home screen provides a deliberately limited diagnostic, `cash_after_bills`,
+not `available_today`. For each currency it sums positive active liquid account
+balances once and subtracts every PLANNED commitment due on or before current
+financial month end, including overdue commitments. Non-liquid accounts,
+archived accounts and investment positions are excluded. Negative active account
+balances are disclosed separately as a signed total, not silently netted out.
+
+`forecast_after_bills` adds only PLANNED income dated from financial today through
+month end. Older pending income is excluded and counted in a warning. Income is
+never included in current cash. Both results may be negative. These values omit
+flexible spending, goal allocations and goal contributions and must never be
+labelled safe-to-spend. The interface states these omissions beside the result.
+There is no consolidation across currencies, return assumption or rounding of
+inputs. Results use Decimal and serialize as exact two-decimal strings.
+
+The additional-expense preview subtracts a positive amount in the selected
+currency from cash_after_bills only. It runs locally with integer cents, remains
+hypothetical and creates no financial record. It does not estimate goal effects.
+The snapshot materializes current monthly planning occurrences before summing
+all matching records, independently of list pagination. An empty setup is not
+presented as financial advice; the user is guided to add balances and major bills.

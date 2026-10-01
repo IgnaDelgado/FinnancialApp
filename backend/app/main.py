@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.accounts import router as accounts_router
 from app.api.auth import router as auth_router
 from app.api.health import router as health_router
+from app.api.home import router as home_router
 from app.api.planning import router as planning_router
 from app.core.config import get_settings
 from app.core.database import dispose_database_engine
@@ -32,3 +33,4 @@ app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(accounts_router)
 app.include_router(planning_router)
+app.include_router(home_router)
