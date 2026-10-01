@@ -42,7 +42,7 @@ every user-owned resource is isolated from other users. Social login,
 multi-factor authentication, and the exact account-recovery flow are outside
 the initial requirement or **Pending decision**.
 
-Registration explains invalid email syntax, password-length and confirmation errors before submission. A duplicate email produces an explicit conflict message. The current Accounts tab shows recorded balances only; Profile has its own tab for user details and logout. Month, Goals, and Investments are visible in bottom navigation but clearly marked as coming soon. No unavailable financial metric is shown as if it were implemented.
+Registration explains invalid email syntax, password-length and confirmation errors before submission. A duplicate email produces an explicit conflict message. The current Accounts tab shows recorded balances only; Profile has its own tab for user details and logout. Tu mes supports the first M3 slice described below. Goals and Investments remain coming soon. No unavailable financial metric is shown as if it were implemented.
 
 ### Financial accounts
 
@@ -53,6 +53,14 @@ Each account records its name, type, currency, current balance, update time, and
 The account view shows each signed balance and a separate signed total of active account cash per currency. The current mobile home previews five accounts and account management displays paginated lists of 50; the total still includes every active account in its currency. This total is not net worth or safe-to-spend money. A negative account does not automatically reduce the positive liquid balance of another account in the availability calculation; the shortfall remains visible and is explained.
 
 ### Income, commitments, and flexible budgets
+
+**Current delivery: first part of M3 only.** Users create and consult one-time
+`PLANNED` income and commitments in Tu mes. Each has a description, strictly
+positive ARS/USD amount, and valid past, present, or future calendar date.
+The current month and all older pending records remain accessible, with overdue
+labels and independent pagination. Creation does not change accounts or their
+history. Received/paid transitions, modifications, recurrence, installments,
+and flexible budgets remain future work. M2 and M3 are still partial.
 
 Users record one-time or monthly income with an expected date and a status of `PLANNED`, `RECEIVED`, or `CANCELLED`. Only `PLANNED` income dated from today through month end qualifies for the month-end forecast. Overdue planned income is excluded and generates a warning. Expected income is never treated as received money.
 

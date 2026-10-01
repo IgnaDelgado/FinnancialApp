@@ -67,7 +67,7 @@ Endpoint shapes, versioning, error envelopes, and public API contracts are **Pen
 
 The Expo/React Native TypeScript application presents registration, setup, planning, investment, simulation, and monthly-close workflows. Each completed domain milestone includes its minimal usable mobile screen; mobile work is not deferred to a final integration phase. The application must show actual values, forecasts, and assumptions distinctly and provide calculation explanations supplied by approved backend behavior.
 
-The authenticated mobile shell currently uses Expo Router bottom tabs for Accounts, Month, Goals, Investments, and Profile. Accounts is the only financial tab with working data; the other financial tabs explicitly show a coming-soon state. Profile is separate from account balances and contains user data and logout controls. State management beyond authentication, offline behavior, localization, and detailed accessibility targets are **Pending decision**.
+The authenticated mobile shell currently uses Expo Router bottom tabs for Accounts, Month, Goals, Investments, and Profile. Accounts and Month have working data; Goals and Investments show a coming-soon state. Profile is separate from account balances and contains user data and logout controls. State management beyond authentication, offline behavior, localization, and detailed accessibility targets are **Pending decision**.
 
 ## Persistence with PostgreSQL
 
@@ -84,6 +84,26 @@ Balance changes create historical snapshots. Referenced accounts and goals are a
 The first accounts slice persists `financial_accounts` and `account_balance_snapshots` separately. An account stores its current signed cash balance, currency, liquidity flag, and last balance-update time. Creation and each absolute balance update append a snapshot in the same transaction. The redundant general-purpose account `updated_at` column was removed; balance and archive timestamps remain. Account queries and mutations always include the authenticated user's identifier; archived accounts are hidden from active-account operations. The versioned account API currently supports create, paginated active listing, read, balance update, currency-scoped signed cash totals, paginated balance history, and archive. Account cash totals are independent of listing pages. The mobile overview previews five accounts and the management screen uses bounded pages of 50; the selected account also displays read-only balance history in pages of 20, with request cleanup to ignore responses after unmounting or changing pages. Snapshot amounts remain decimal strings in the client and timestamps display in the financial timezone. Mobile removal calls the existing owned archive endpoint after inline confirmation, then reloads the first active-account page and totals. It retains persisted records and prevents duplicate submissions. Stale totals are hidden if refreshing fails after successful archival. Account metadata editing and a dedicated archived-account management view remain for a later bounded slice.
 
 Technical timestamps are stored in UTC. Financial dates, today, due dates, and month boundaries use `America/Argentina/Cordoba`.
+
+The first M3 slice stores `planned_income` and `planned_commitments` in separate
+tables with owner foreign keys, `NUMERIC(20,2)` amounts, SQL `DATE` financial
+dates, UTC creation timestamps, and constraints for supported currencies,
+positive amounts, `PLANNED`, and `ONE_TIME`. The new additive Alembic migration
+does not modify existing account tables. Domain validation rejects invalid
+amounts; schemas reject floats and invalid boundary data. Services create only
+planning records. Repositories scope all reads by authenticated owner and use
+date/UUID ordering with bounded offset pagination.
+
+`POST` and `GET /api/v1/income` and `/api/v1/commitments` create and list records.
+GET accepts optional year/month (defaulting to financial today), include_overdue
+(default true), limit (50 by default, at most 100), and offset. Prior-month planned
+records are included by default. Future-month records can be queried via API.
+Tu mes lists the current month and older pending records in independent pages
+of 20. It refreshes on focus, date changes, explicit refresh, and successful
+creation. Request generations discard stale reads; form guards prevent concurrent
+submissions. This is not server-side idempotency: an ambiguous network failure
+may require checking the refreshed list before a manual retry. No dependencies
+or account mutations are introduced.
 
 ## Core Data Flows
 

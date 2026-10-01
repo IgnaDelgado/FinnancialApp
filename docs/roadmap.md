@@ -87,6 +87,16 @@ milestones below are not implemented by this slice.
 
 ### M3 — Income, commitments, and flexible budgets
 
+**Current status — first part only.** Backend and Tu mes support creation and
+paginated consultation of `ONE_TIME`, `PLANNED` income and commitments.
+Amounts must be positive; past, present, and future dates are accepted.
+The current financial month and all older pending records remain accessible
+without changing account balances or history. There are no available-money,
+savings, or projection calculations. M3 remains incomplete: status transitions,
+editing/rescheduling/deletion, monthly recurrence, installments, partial payments,
+flexible budgets, and aggregate spending are not delivered. Remaining M2 work
+does not block this independent planning slice and is unchanged.
+
 **Depends on:** M2 and approved recurrence/status rules.
 
 Implement one-time and recurring income, commitments and installments, flexible-budget plans and aggregate monthly spending, and their minimal mobile list and editor screens.

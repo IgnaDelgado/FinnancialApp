@@ -21,7 +21,7 @@ and see per-currency totals. Each balance change creates a historical snapshot.
 The API enforces ownership, supports account archival, and paginates active
 accounts and balance history. The mobile home previews five accounts; account
 management displays pages of 50. Totals include every active account, not just
-the visible page, and are not net worth or safe-to-spend money. Month, Goals,
+the visible page, and are not net worth or safe-to-spend money. Goals
 and Investments remain clearly marked as coming soon.
 
 Mobile account balance history is now available when selecting an account,
@@ -30,9 +30,13 @@ and retry controls. Snapshots are complete balances, not transactions.
 The selected account offers confirmed removal through archival: it disappears
 from active accounts and totals while its records are retained.
 M2 is not yet complete: account-metadata editing and a dedicated archived-account
-management view remain. M3–M9 (income,
-commitments, budgets, goals, explained availability, investments, net worth,
-simulations, monthly close, and release readiness) are future work. The
+management view remain. The first part of M3 adds creation and paginated
+consultation of one-time planned income and commitments in Tu mes. It displays
+the current financial month and older pending records separately by resource.
+Amounts are positive ARS/USD decimals; past and future calendar dates are
+accepted. These records do not change accounts or calculate available money.
+M3 remains partial: status transitions, modifications, recurrence, installments,
+and budgets remain future work, as do M4–M9. The
 remaining M2 tasks and milestone order are tracked in
 [the roadmap](docs/roadmap.md). Email verification, password recovery, abuse
 protection, account security controls, and user-controlled data export/deletion
