@@ -1,6 +1,6 @@
 import { Link, useFocusEffect } from 'expo-router';
 import { ArrowLeft, ChevronRight, Plus, RefreshCw, WalletCards } from 'lucide-react-native';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ApiError } from '@/auth/api';
 import { useAuth } from '@/auth/AuthProvider';
 import {
+  archiveAccount,
   createAccount,
   getAccountCashTotals,
   listAccounts,
@@ -25,6 +26,7 @@ import {
   type FinancialAccount,
 } from '@/accounts/api';
 import { formatMoney, normalizeMoneyInput } from '@/accounts/format';
+import { BalanceHistory } from '@/accounts/BalanceHistory';
 import { NoticeBanner } from '@/components/NoticeBanner';
 import { colors, fontFamily } from '@/theme';
 
@@ -58,6 +60,8 @@ export default function AccountsScreen() {
   const [balance, setBalance] = useState('');
   const [isNegative, setIsNegative] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirmRemoval, setConfirmRemoval] = useState(false);
+  const mutationInProgress = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadPage = useCallback(async (nextPage: number) => {
@@ -98,6 +102,8 @@ export default function AccountsScreen() {
   }, [session, withAccessToken]));
 
   function openCreate() {
+    if (mutationInProgress.current) return;
+    setConfirmRemoval(false);
     setName('');
     setAccountType('BANK');
     setCurrency(session?.user.reference_currency ?? 'ARS');
@@ -110,6 +116,8 @@ export default function AccountsScreen() {
   }
 
   function openBalance(account: FinancialAccount) {
+    if (mutationInProgress.current) return;
+    setConfirmRemoval(false);
     setSelected(account);
     setBalance(account.current_balance.replace(/^-/, ''));
     setIsNegative(account.current_balance.startsWith('-'));
@@ -118,6 +126,7 @@ export default function AccountsScreen() {
   }
 
   async function save() {
+    if (mutationInProgress.current) return;
     const normalizedBalance = normalizeMoneyInput(balance);
     if (!normalizedBalance) {
       setError('Ingresá un importe válido, con hasta dos decimales.');
@@ -130,6 +139,7 @@ export default function AccountsScreen() {
       setError('Ingresá un nombre para la cuenta.');
       return;
     }
+    mutationInProgress.current = true;
     setSaving(true);
     setError(null);
     let persisted = false;
@@ -154,7 +164,36 @@ export default function AccountsScreen() {
         ? 'El cambio se guardó, pero no pudimos actualizar la lista. Volvé a entrar a Cuentas para verlo.'
         : errorMessage(caught));
     } finally {
+      mutationInProgress.current = false;
       setSaving(false);
+    }
+  }
+
+  async function removeSelectedAccount() {
+    if (!selected || !confirmRemoval || mutationInProgress.current) return;
+    mutationInProgress.current = true;
+    setSaving(true);
+    setError(null);
+    let removed = false;
+    try {
+      await withAccessToken((token) => archiveAccount(token, selected.id));
+      removed = true;
+      setEditor(null);
+      setSelected(null);
+      setConfirmRemoval(false);
+      // Hide stale totals until the server confirms the remaining active balances.
+      setAccounts(null);
+      setCashTotals([]);
+      setLoading(true);
+      await loadPage(0);
+    } catch (caught) {
+      setError(removed
+        ? 'La cuenta se quitó, pero no pudimos actualizar la lista. Tocá Reintentar para actualizar los saldos.'
+        : errorMessage(caught));
+    } finally {
+      mutationInProgress.current = false;
+      setSaving(false);
+      setLoading(false);
     }
   }
 
@@ -187,7 +226,7 @@ export default function AccountsScreen() {
               <Text style={styles.formTitle}>
                 {editor === 'create' ? 'Nueva cuenta' : `Actualizar ${selected?.name ?? 'saldo'}`}
               </Text>
-              <Pressable onPress={() => setEditor(null)} style={styles.cancelButton}>
+              <Pressable disabled={saving} onPress={() => { setEditor(null); setConfirmRemoval(false); }} style={styles.cancelButton}>
                 <Text style={styles.cancelText}>Cancelar</Text>
               </Pressable>
             </View>
@@ -294,12 +333,38 @@ export default function AccountsScreen() {
             ) : (
               <Text style={styles.helpText}>Ingresá el saldo completo que figura hoy, no la diferencia respecto del anterior.</Text>
             )}
-            <Pressable disabled={saving} onPress={() => void save()} style={styles.saveButton}>
+            <Pressable disabled={saving || confirmRemoval} onPress={() => void save()} style={styles.saveButton}>
               {saving ? <ActivityIndicator color={colors.white} /> : (
                 <Text style={styles.saveText}>{editor === 'create' ? 'Guardar cuenta' : 'Guardar saldo'}</Text>
               )}
             </Pressable>
+            {editor === 'balance' && selected ? (
+              <View style={styles.removalSection}>
+                {confirmRemoval ? (
+                  <>
+                    <Text accessibilityRole="header" style={styles.liquidTitle}>¿Quitar {selected.name}?</Text>
+                    <Text style={styles.helpText}>
+                      Se archivará y dejará de aparecer en tus cuentas y totales. Su saldo actual es {formatMoney(selected.current_balance, selected.currency)}. El historial se conserva; esta acción no mueve dinero.
+                    </Text>
+                    <Pressable accessibilityRole="button" disabled={saving} onPress={() => void removeSelectedAccount()} style={styles.removeButton}>
+                      {saving ? <ActivityIndicator color={colors.coral} /> : <Text style={styles.removeText}>Confirmar y quitar cuenta</Text>}
+                    </Pressable>
+                    <Pressable accessibilityRole="button" disabled={saving} onPress={() => setConfirmRemoval(false)} style={styles.cancelButton}>
+                      <Text style={styles.cancelText}>Conservar cuenta</Text>
+                    </Pressable>
+                  </>
+                ) : (
+                  <Pressable accessibilityRole="button" disabled={saving} onPress={() => setConfirmRemoval(true)} style={styles.removeButton}>
+                    <Text style={styles.removeText}>Quitar cuenta</Text>
+                  </Pressable>
+                )}
+              </View>
+            ) : null}
           </View>
+        ) : null}
+
+        {editor === 'balance' && selected ? (
+          <BalanceHistory key={selected.id} account={selected} />
         ) : null}
 
         {loading && accounts === null ? (
@@ -352,7 +417,7 @@ export default function AccountsScreen() {
               <View style={styles.pagination}>
                 <Pressable
                   accessibilityRole="button"
-                  disabled={loading || page === 0}
+                  disabled={saving || loading || page === 0}
                   onPress={() => void changePage(page - 1)}
                   style={[styles.pageButton, (loading || page === 0) && styles.pageButtonDisabled]}
                 >
@@ -360,7 +425,7 @@ export default function AccountsScreen() {
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
-                  disabled={loading || !hasNextPage}
+                  disabled={saving || loading || !hasNextPage}
                   onPress={() => void changePage(page + 1)}
                   style={[styles.pageButton, (loading || !hasNextPage) && styles.pageButtonDisabled]}
                 >
@@ -381,6 +446,9 @@ function errorMessage(caught: unknown): string {
 }
 
 const styles = StyleSheet.create({
+  removalSection: { borderTopColor: colors.line, borderTopWidth: 1, gap: 10, marginTop: 12, paddingTop: 12 },
+  removeButton: { alignItems: 'center', borderColor: colors.coral, borderWidth: 1, borderRadius: 15, justifyContent: 'center', minHeight: 48, paddingHorizontal: 12 },
+  removeText: { color: colors.coral, fontFamily: fontFamily.semibold, fontSize: 13 },
   safeArea: { backgroundColor: colors.canvas, flex: 1 },
   content: { gap: 16, paddingBottom: 34, paddingHorizontal: 20, paddingTop: 14 },
   header: { alignItems: 'center', flexDirection: 'row', gap: 12 },
