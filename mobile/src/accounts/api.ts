@@ -1,4 +1,4 @@
-import { request } from '@/auth/api';
+import { request } from '../auth/api.ts';
 
 export type AccountType =
   | 'CASH'
@@ -26,6 +26,23 @@ export type AccountCashTotal = {
   currency: Currency;
   balance: string;
 };
+
+export type AccountBalanceSnapshot = {
+  id: string;
+  balance: string;
+  recorded_at: string;
+};
+
+export function listAccountBalanceHistory(
+  accessToken: string,
+  accountId: string,
+  { limit = 20, offset = 0 }: { limit?: number; offset?: number } = {},
+): Promise<AccountBalanceSnapshot[]> {
+  return request<AccountBalanceSnapshot[]>(
+    `/api/v1/accounts/${encodeURIComponent(accountId)}/balance-history?limit=${limit}&offset=${offset}`,
+    { accessToken },
+  );
+}
 
 export type CreateAccountInput = {
   name: string;

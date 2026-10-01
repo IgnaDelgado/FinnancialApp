@@ -25,6 +25,7 @@ import {
   type FinancialAccount,
 } from '@/accounts/api';
 import { formatMoney, normalizeMoneyInput } from '@/accounts/format';
+import { BalanceHistory } from '@/accounts/BalanceHistory';
 import { NoticeBanner } from '@/components/NoticeBanner';
 import { colors, fontFamily } from '@/theme';
 
@@ -300,6 +301,10 @@ export default function AccountsScreen() {
               )}
             </Pressable>
           </View>
+        ) : null}
+
+        {editor === 'balance' && selected ? (
+          <BalanceHistory key={selected.id} account={selected} />
         ) : null}
 
         {loading && accounts === null ? (

@@ -24,8 +24,11 @@ management displays pages of 50. Totals include every active account, not just
 the visible page, and are not net worth or safe-to-spend money. Month, Goals,
 and Investments remain clearly marked as coming soon.
 
-M2 is not yet complete: mobile account-metadata editing, archived-account
-management, and a mobile balance-history view remain. M3–M9 (income,
+Mobile account balance history is now available when selecting an account,
+with pages of 20 snapshots, signed currency amounts, Argentina timestamps,
+and retry controls. Snapshots are complete balances, not transactions.
+M2 is not yet complete: account-metadata editing and archived-account
+management remain. M3–M9 (income,
 commitments, budgets, goals, explained availability, investments, net worth,
 simulations, monthly close, and release readiness) are future work. The
 remaining M2 tasks and milestone order are tracked in

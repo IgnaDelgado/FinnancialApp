@@ -77,8 +77,9 @@ snapshots. Mobile supports creation and full-balance updates; home previews five
 accounts, while account management uses pages of 50. The displayed total
 includes all active accounts in that currency, not just the visible page.
 Negative balances and browser-session restoration in development have been
-tested. Mobile account-metadata editing, archived-account management, and a
-balance-history view remain to finish the user-facing M2 workflow. Production
+tested. Mobile now displays balance history from the selected account, in
+pages of 20 snapshots with Argentina timestamps and retry controls. Account
+metadata editing and archived-account management remain to finish M2. Production
 web session persistence needs a separate secure-cookie decision. The M3–M9
 milestones below are not implemented by this slice.
 
