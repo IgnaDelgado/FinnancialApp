@@ -41,7 +41,7 @@ export default function HomeScreen() {
     setAccounts(null);
     setCashTotals([]);
     setAccountsError(null);
-    void withAccessToken((token) => Promise.all([listAccounts(token), getAccountCashTotals(token)]))
+    void withAccessToken((token) => Promise.all([listAccounts(token, { limit: 6 }), getAccountCashTotals(token)]))
       .then(([accountResult, totalResult]) => {
         if (!active) return;
         setAccounts(accountResult);
@@ -140,7 +140,7 @@ export default function HomeScreen() {
             {accounts?.length ? (
               <View style={styles.accountList}>
                 <Text style={styles.sectionTitle}>Tus cuentas</Text>
-                {accounts.map((account) => (
+                {accounts.slice(0, 5).map((account) => (
                   <Link href="/accounts" asChild key={account.id}>
                     <Pressable style={styles.accountRow}>
                       <View style={styles.accountRowCopy}>
@@ -152,6 +152,14 @@ export default function HomeScreen() {
                     </Pressable>
                   </Link>
                 ))}
+                {accounts.length > 5 ? (
+                  <Link href="/accounts" asChild>
+                    <Pressable accessibilityRole="button" style={styles.moreAccountsButton}>
+                      <Text style={styles.moreAccountsText}>Ver todas las cuentas</Text>
+                      <ChevronRight color={colors.forest} size={16} />
+                    </Pressable>
+                  </Link>
+                ) : null}
               </View>
             ) : null}
           </Animated.View>
@@ -187,6 +195,8 @@ const styles = StyleSheet.create({
   accountName: { color: colors.ink, fontFamily: fontFamily.semibold, fontSize: 13 },
   accountMeta: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 10 },
   accountBalance: { color: colors.ink, fontFamily: fontFamily.semibold, fontSize: 12 },
+  moreAccountsButton: { alignItems: 'center', flexDirection: 'row', gap: 6, justifyContent: 'center', minHeight: 46 },
+  moreAccountsText: { color: colors.forest, fontFamily: fontFamily.semibold, fontSize: 12 },
   negativeBalance: { color: colors.coral },
   sectionTitle: { color: colors.ink, fontFamily: fontFamily.displayMedium, fontSize: 22, marginTop: 2 },
 });

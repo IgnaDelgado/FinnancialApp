@@ -40,11 +40,14 @@ const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
 const DEFAULT_LIQUID_TYPES: AccountType[] = [
   'CASH', 'BANK', 'DIGITAL_WALLET', 'FOREIGN_CURRENCY',
 ];
+const PAGE_SIZE = 50;
 
 export default function AccountsScreen() {
   const { session, withAccessToken } = useAuth();
   const [accounts, setAccounts] = useState<FinancialAccount[] | null>(null);
   const [cashTotals, setCashTotals] = useState<AccountCashTotal[]>([]);
+  const [page, setPage] = useState(0);
+  const [hasNextPage, setHasNextPage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editor, setEditor] = useState<'create' | 'balance' | null>(null);
   const [selected, setSelected] = useState<FinancialAccount | null>(null);
@@ -57,20 +60,39 @@ export default function AccountsScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const reload = useCallback(async () => {
+  const loadPage = useCallback(async (nextPage: number) => {
     const [accountResult, totalResult] = await withAccessToken((token) =>
-      Promise.all([listAccounts(token), getAccountCashTotals(token)]),
+      Promise.all([
+        listAccounts(token, { limit: PAGE_SIZE + 1, offset: nextPage * PAGE_SIZE }),
+        getAccountCashTotals(token),
+      ]),
     );
-    setAccounts(accountResult);
+    setAccounts(accountResult.slice(0, PAGE_SIZE));
     setCashTotals(totalResult);
+    setHasNextPage(accountResult.length > PAGE_SIZE);
+    setPage(nextPage);
   }, [withAccessToken]);
+
+  async function changePage(nextPage: number) {
+    setLoading(true);
+    setError(null);
+    try {
+      await loadPage(nextPage);
+    } catch (caught) {
+      setError(errorMessage(caught));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useFocusEffect(useCallback(() => {
     if (!session) return;
     let active = true;
     setLoading(true);
-    void withAccessToken((token) => Promise.all([listAccounts(token), getAccountCashTotals(token)]))
-      .then(([accountResult, totalResult]) => { if (active) { setAccounts(accountResult); setCashTotals(totalResult); setError(null); setLoading(false); } })
+    void withAccessToken((token) => Promise.all([
+      listAccounts(token, { limit: PAGE_SIZE + 1 }), getAccountCashTotals(token),
+    ]))
+      .then(([accountResult, totalResult]) => { if (active) { setAccounts(accountResult.slice(0, PAGE_SIZE)); setCashTotals(totalResult); setHasNextPage(accountResult.length > PAGE_SIZE); setPage(0); setError(null); setLoading(false); } })
       .catch((caught) => { if (active) { setError(errorMessage(caught)); setLoading(false); } });
     return () => { active = false; };
   }, [session, withAccessToken]));
@@ -110,22 +132,27 @@ export default function AccountsScreen() {
     }
     setSaving(true);
     setError(null);
+    let persisted = false;
     try {
       if (editor === 'create') {
         await withAccessToken((token) => createAccount(token, {
           name: name.trim(), account_type: accountType, currency,
           initial_balance: signedBalance, is_liquid: isLiquid,
         }));
+        persisted = true;
       } else if (editor === 'balance' && selected) {
         await withAccessToken((token) =>
           updateAccountBalance(token, selected.id, signedBalance),
         );
+        persisted = true;
       }
-      await reload();
       setEditor(null);
       setSelected(null);
+      await loadPage(editor === 'create' ? 0 : page);
     } catch (caught) {
-      setError(errorMessage(caught));
+      setError(persisted
+        ? 'El cambio se guardó, pero no pudimos actualizar la lista. Volvé a entrar a Cuentas para verlo.'
+        : errorMessage(caught));
     } finally {
       setSaving(false);
     }
@@ -134,7 +161,7 @@ export default function AccountsScreen() {
   if (!session) return null;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Link href="/" asChild>
@@ -184,6 +211,7 @@ export default function AccountsScreen() {
                     <Pressable
                       accessibilityRole="radio"
                       accessibilityState={{ selected: accountType === option.value }}
+                      aria-checked={accountType === option.value}
                       key={option.value}
                       onPress={() => {
                         setAccountType(option.value);
@@ -203,6 +231,7 @@ export default function AccountsScreen() {
                     <Pressable
                       accessibilityRole="radio"
                       accessibilityState={{ selected: currency === option }}
+                      aria-checked={currency === option}
                       key={option}
                       onPress={() => setCurrency(option)}
                       style={[styles.choice, currency === option && styles.choiceActive]}
@@ -238,6 +267,7 @@ export default function AccountsScreen() {
             <Pressable
               accessibilityRole="checkbox"
               accessibilityState={{ checked: isNegative }}
+              aria-checked={isNegative}
               onPress={() => setIsNegative(!isNegative)}
               style={styles.liquidRow}
             >
@@ -251,6 +281,7 @@ export default function AccountsScreen() {
               <Pressable
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: isLiquid }}
+                aria-checked={isLiquid}
                 onPress={() => setIsLiquid(!isLiquid)}
                 style={styles.liquidRow}
               >
@@ -274,7 +305,7 @@ export default function AccountsScreen() {
         {loading && accounts === null ? (
           <ActivityIndicator color={colors.forest} style={styles.loading} />
         ) : accounts === null ? (
-          <Pressable onPress={() => void reload().catch((caught) => setError(errorMessage(caught)))} style={styles.emptyAction}>
+          <Pressable onPress={() => void changePage(0)} style={styles.emptyAction}>
             <Text style={styles.emptyActionText}>Reintentar</Text>
           </Pressable>
         ) : accounts.length === 0 ? (
@@ -300,7 +331,7 @@ export default function AccountsScreen() {
                 Suma saldos positivos y negativos por moneda. No es el dinero disponible para gastar ni el patrimonio neto.
               </Text>
             </View>
-            <Text style={styles.sectionTitle}>Cuentas activas</Text>
+            <Text style={styles.sectionTitle}>Cuentas activas · página {page + 1}</Text>
             {accounts.map((account) => (
               <Pressable key={account.id} onPress={() => openBalance(account)} style={styles.accountCard}>
                 <View style={styles.accountIcon}><WalletCards color={colors.forest} size={20} /></View>
@@ -317,6 +348,27 @@ export default function AccountsScreen() {
                 <ChevronRight color={colors.muted} size={16} />
               </Pressable>
             ))}
+            {page > 0 || hasNextPage ? (
+              <View style={styles.pagination}>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={loading || page === 0}
+                  onPress={() => void changePage(page - 1)}
+                  style={[styles.pageButton, (loading || page === 0) && styles.pageButtonDisabled]}
+                >
+                  <Text style={styles.pageButtonText}>Anterior</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={loading || !hasNextPage}
+                  onPress={() => void changePage(page + 1)}
+                  style={[styles.pageButton, (loading || !hasNextPage) && styles.pageButtonDisabled]}
+                >
+                  <Text style={styles.pageButtonText}>Siguiente</Text>
+                </Pressable>
+              </View>
+            ) : null}
+            {loading ? <ActivityIndicator color={colors.forest} /> : null}
           </View>
         )}
       </ScrollView>
@@ -377,4 +429,8 @@ const styles = StyleSheet.create({
   accountMeta: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 10.5 },
   accountEnd: { alignItems: 'flex-end', gap: 5 },
   accountBalance: { color: colors.ink, fontFamily: fontFamily.semibold, fontSize: 12 },
+  pagination: { flexDirection: 'row', gap: 10, justifyContent: 'space-between', marginTop: 8 },
+  pageButton: { alignItems: 'center', backgroundColor: colors.paleGreen, borderRadius: 12, flex: 1, justifyContent: 'center', minHeight: 44 },
+  pageButtonDisabled: { opacity: 0.45 },
+  pageButtonText: { color: colors.forest, fontFamily: fontFamily.semibold, fontSize: 12 },
 });

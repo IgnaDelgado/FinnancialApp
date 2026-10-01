@@ -70,6 +70,18 @@ Implement ARS and USD accounts, current balances, historical balance snapshots, 
 - The mobile app can list, create, and update accounts and cash balances.
 - Negative-balance and account-history behavior match approved rules.
 
+**Current status — partial implementation.** The API supports owned account
+creation, paginated active listing, read, signed balance updates, paginated
+history, per-currency cash totals, and archival. Balance changes append
+snapshots. Mobile supports creation and full-balance updates; home previews five
+accounts, while account management uses pages of 50. The displayed total
+includes all active accounts in that currency, not just the visible page.
+Negative balances and browser-session restoration in development have been
+tested. Mobile account-metadata editing, archived-account management, and a
+balance-history view remain to finish the user-facing M2 workflow. Production
+web session persistence needs a separate secure-cookie decision. The M3–M9
+milestones below are not implemented by this slice.
+
 ### M3 — Income, commitments, and flexible budgets
 
 **Depends on:** M2 and approved recurrence/status rules.

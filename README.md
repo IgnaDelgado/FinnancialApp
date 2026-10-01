@@ -1,21 +1,37 @@
 # Financial Plan
 
-Mobile-first personal finance planning application. The current authentication
-slice includes the FastAPI and PostgreSQL backend plus an Expo/React Native
-client for registration, login, session restoration, refresh-token rotation,
-profile display, and logout.
+Mobile-first personal finance planning application. The current implementation
+includes a FastAPI/PostgreSQL API and an Expo/React Native client for
+authentication and manually recorded financial-account balances.
 
 ## Current status
 
-Milestone M1 authentication V2 is complete for local development. The backend
-and mobile client support registration, login, automatic session restoration,
-rotating refresh tokens, current-device logout, global logout, ARS/USD reference
-currency selection, configurable browser CORS, and a responsive iPhone-first
-interface.
+M1 authentication V2 is complete for local development. The backend and mobile
+client support registration, login, automatic session restoration, rotating
+refresh tokens, current-device logout, global logout, ARS/USD reference-currency
+selection, configurable browser CORS, and a responsive mobile-first interface.
+Native refresh tokens use SecureStore. Development web previews keep the refresh
+token in the tab's `sessionStorage` so F5 can restore the session; production web
+does not persist it pending a secure-cookie design. If global logout cannot
+reach the server, the local session remains available so the user can retry.
 
-The next product milestone is M2 financial accounts and current balances. Email
-verification, password recovery, abuse protection, account security controls,
-and user-controlled data export/deletion are tracked in the
+The first M2 slice is implemented: users can create supported manual accounts,
+record signed ARS/USD balances (including overdrafts), update the full balance,
+and see per-currency totals. Each balance change creates a historical snapshot.
+The API enforces ownership, supports account archival, and paginates active
+accounts and balance history. The mobile home previews five accounts; account
+management displays pages of 50. Totals include every active account, not just
+the visible page, and are not net worth or safe-to-spend money. Month, Goals,
+and Investments remain clearly marked as coming soon.
+
+M2 is not yet complete: mobile account-metadata editing, archived-account
+management, and a mobile balance-history view remain. M3–M9 (income,
+commitments, budgets, goals, explained availability, investments, net worth,
+simulations, monthly close, and release readiness) are future work. The
+remaining M2 tasks and milestone order are tracked in
+[the roadmap](docs/roadmap.md). Email verification, password recovery, abuse
+protection, account security controls, and user-controlled data export/deletion
+are tracked separately in the
 [pre-beta checklist](docs/roadmap.md#pre-beta-authentication-and-account-checklist).
 
 ## Prerequisites

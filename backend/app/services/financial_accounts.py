@@ -55,8 +55,10 @@ class FinancialAccountService:
         self._session.refresh(account)
         return account
 
-    def list_active(self, user_id: UUID) -> list[FinancialAccount]:
-        return self._accounts.list_active(user_id)
+    def list_active(
+        self, user_id: UUID, *, limit: int, offset: int
+    ) -> list[FinancialAccount]:
+        return self._accounts.list_active(user_id, limit=limit, offset=offset)
 
     def cash_totals(self, user_id: UUID) -> dict[Currency, Decimal]:
         return sum_account_balances(self._accounts.list_active_balances(user_id))

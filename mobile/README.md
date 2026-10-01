@@ -10,11 +10,12 @@ Expo SDK 57 and React Native client for authentication and manual financial acco
 - Rotating refresh tokens stored with Expo SecureStore on native devices.
 - Session restoration when the native application starts.
 - Logout for the current device or every refresh session.
+- Development web preview sessions survive F5 in the same tab through `sessionStorage`; production web does not persist refresh tokens until a secure-cookie design is approved.
 - Expo Router public and authenticated route groups.
 - Registration feedback for invalid email, password length, confirmation, and duplicate email.
 - Account creation and balance updates, including negative balances.
 - Bottom navigation for Accounts, Month, Goals, Investments, and Profile.
-- Accounts shows actual account balances and per-currency totals. Profile holds user details and logout separately.
+- Accounts shows a five-account preview, pages of 50 for management, and per-currency totals across all active accounts. Profile holds user details and logout separately.
 - Month, Goals, and Investments are clearly marked as coming soon; they do not show invented values or save data.
 
 Budgets, goals, investments, net worth, and safe-to-spend calculations belong to later roadmap milestones. The Accounts tab shows only recorded account cash and labels it separately from those future calculations.

@@ -43,8 +43,12 @@ def create_account(
 def list_accounts(
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[Session, Depends(get_database_session)],
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ) -> list[AccountResponse]:
-    accounts = FinancialAccountService(session).list_active(current_user.id)
+    accounts = FinancialAccountService(session).list_active(
+        current_user.id, limit=limit, offset=offset
+    )
     return [AccountResponse.model_validate(account) for account in accounts]
 
 

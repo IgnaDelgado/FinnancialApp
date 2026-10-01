@@ -14,6 +14,7 @@ import {
   getRefreshToken,
   saveRefreshToken,
 } from './tokenStorage';
+import { completeGlobalSignOut } from './globalSignOut';
 import type { LoginInput, RegistrationInput, Session, TokenPair, User } from './types';
 
 type AuthContextValue = {
@@ -132,12 +133,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signOutAll() {
-    try {
-      await withAccessToken(logoutAllSessions);
-    } finally {
-      await clearRefreshToken();
-      updateSession(null);
-    }
+    await completeGlobalSignOut(
+      () => withAccessToken(logoutAllSessions),
+      clearRefreshToken,
+      () => updateSession(null),
+    );
   }
 
   const value: AuthContextValue = {

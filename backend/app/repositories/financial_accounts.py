@@ -20,14 +20,18 @@ class FinancialAccountRepository:
     def add_snapshot(self, snapshot: AccountBalanceSnapshot) -> None:
         self._session.add(snapshot)
 
-    def list_active(self, user_id: UUID) -> list[FinancialAccount]:
+    def list_active(
+        self, user_id: UUID, *, limit: int, offset: int
+    ) -> list[FinancialAccount]:
         statement = (
             select(FinancialAccount)
             .where(
                 FinancialAccount.user_id == user_id,
                 FinancialAccount.archived_at.is_(None),
             )
-            .order_by(FinancialAccount.created_at, FinancialAccount.id)
+            .order_by(FinancialAccount.created_at.desc(), FinancialAccount.id.desc())
+            .limit(limit)
+            .offset(offset)
         )
         return list(self._session.scalars(statement).all())
 

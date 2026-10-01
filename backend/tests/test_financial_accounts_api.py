@@ -248,6 +248,66 @@ def test_account_operations_are_scoped_to_owner(
     )
 
 
+def test_account_list_pages_are_bounded_stable_and_owner_scoped(
+    api_client: TestClient, database_session: Session
+) -> None:
+    owner_headers = _headers(database_session, "page-owner@example.com")
+    other_headers = _headers(database_session, "page-other@example.com")
+    created_ids = {
+        str(_create_account(api_client, owner_headers)["id"]) for _ in range(3)
+    }
+    _create_account(api_client, other_headers)
+
+    first = api_client.get("/api/v1/accounts?limit=2&offset=0", headers=owner_headers)
+    second = api_client.get("/api/v1/accounts?limit=2&offset=2", headers=owner_headers)
+    first_ids = [item["id"] for item in first.json()]
+    second_ids = [item["id"] for item in second.json()]
+
+    assert first.status_code == second.status_code == 200
+    assert len(first_ids) == 2
+    assert len(second_ids) == 1
+    assert set(first_ids + second_ids) == created_ids
+    assert len(set(first_ids + second_ids)) == 3
+    assert api_client.get("/api/v1/accounts/totals", headers=owner_headers).json() == [
+        {"currency": "ARS", "balance": "3750.75"}
+    ]
+    assert (
+        api_client.get(
+            "/api/v1/accounts?limit=2&offset=3", headers=owner_headers
+        ).json()
+        == []
+    )
+    for query in ("limit=0", "limit=101", "offset=-1"):
+        assert (
+            api_client.get(
+                f"/api/v1/accounts?{query}", headers=owner_headers
+            ).status_code
+            == 422
+        )
+
+
+def test_account_list_default_page_does_not_truncate_cash_totals(
+    api_client: TestClient, database_session: Session
+) -> None:
+    headers = _headers(database_session, "many-accounts@example.com")
+    created_ids = {
+        str(_create_account(api_client, headers, balance="100.00")["id"])
+        for _ in range(51)
+    }
+
+    first = api_client.get("/api/v1/accounts", headers=headers)
+    second = api_client.get("/api/v1/accounts?offset=50", headers=headers)
+    first_ids = [account["id"] for account in first.json()]
+    second_ids = [account["id"] for account in second.json()]
+    totals = api_client.get("/api/v1/accounts/totals", headers=headers)
+
+    assert first.status_code == second.status_code == totals.status_code == 200
+    assert len(first_ids) == 50
+    assert len(second_ids) == 1
+    assert set(first_ids + second_ids) == created_ids
+    assert totals.json() == [{"currency": "ARS", "balance": "5100.00"}]
+
+
 def test_archived_account_disappears_from_active_operations_but_retains_records(
     api_client: TestClient, database_session: Session
 ) -> None:

@@ -35,8 +35,11 @@ export type CreateAccountInput = {
   is_liquid: boolean;
 };
 
-export function listAccounts(accessToken: string): Promise<FinancialAccount[]> {
-  return request<FinancialAccount[]>('/api/v1/accounts', { accessToken });
+export function listAccounts(
+  accessToken: string,
+  { limit = 50, offset = 0 }: { limit?: number; offset?: number } = {},
+): Promise<FinancialAccount[]> {
+  return request<FinancialAccount[]>(`/api/v1/accounts?limit=${limit}&offset=${offset}`, { accessToken });
 }
 
 export function getAccountCashTotals(accessToken: string): Promise<AccountCashTotal[]> {

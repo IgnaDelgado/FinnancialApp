@@ -26,6 +26,8 @@ Creating an account records its initial balance as the first snapshot. Updating 
 
 Balance-history reads are paginated in chronological order by timestamp and snapshot ID. The API returns at most 50 snapshots by default, or up to 100 when requested; clients can request later pages with an offset. Pagination limits each response, but does not discard historical records or reduce database storage.
 
+Active-account lists are paginated separately from balance history. The API returns 50 accounts by default, at most 100 per request, ordered by creation time and ID from newest to oldest; an offset selects later pages. The account cash total still includes every active account, not only the displayed page. The mobile overview previews up to five accounts and the management view displays at most 50 at a time.
+
 The displayed **total account cash balance** is calculated independently for each currency by summing the current signed balances of active accounts once. It includes non-liquid account cash, but excludes archived accounts, historical snapshots, investment positions, other assets, and separate liabilities. It is neither net worth nor available-to-spend money. Individual account balances remain visible alongside the total. For example, an ARS 30,000 wallet and an ARS -20,000 bank account display individually and produce an ARS 10,000 total account cash balance.
 
 ## Money, Precision, and Rounding
