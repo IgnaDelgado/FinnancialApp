@@ -134,6 +134,31 @@ Received/paid/cancelled transitions, editing, rescheduling, deletion, monthly
 recurrence, partial payments, installments, budgets, and financial calculations
 are outside this slice. Their existing pending decisions remain unchanged.
 
+### Monthly planning extension (approved 2026-10-01)
+
+This extension supersedes the first slice's one-time-only delivery restriction.
+The same strictly positive Decimal amount, currency, date, and `PLANNED` rules
+apply to both recurrence types. A monthly template uses the chosen first date;
+no occurrence predates it. Its original day remains the anchor. If that day is
+missing in a month, the occurrence uses that month's last day. For example,
+31 January 2027 repeats on 28 February and 31 March; leap-year February uses 29.
+
+Creation atomically saves the template and first occurrence. Consultation fills
+missed months through the current financial month, preserving pending records
+after inactivity. A future-month consultation creates only that requested month,
+without creating intervening future months. It never advances the elapsed-month
+checkpoint. A database unique constraint on template/month and serialized
+per-template generation prevent duplicate occurrences, including concurrent reads.
+Each occurrence retains its own amount, currency and date; ARS and USD are never
+combined. No account balances or snapshots change.
+
+Tu mes navigates past, current and future months, keeping its pages of 20 and
+older pending records. Its DD/MM/YYYY input is normalized to ISO at the API.
+Templates are immutable in this extension. Editing, stopping/cancelling repeats,
+status transitions, payment history and availability calculations remain pending.
+A manually retried POST after an ambiguous network failure can create another
+template; users should refresh the list before retrying.
+
 ## Flexible Monthly Budget
 
 The MVP supplies daily life, activities and entertainment, and unexpected-expense categories, and permits additional categories. Detailed purchase entry is optional. Users enter aggregate flexible spending for the month.

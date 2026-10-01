@@ -16,12 +16,13 @@ Expo SDK 57 and React Native client for authentication and manual financial acco
 - Account creation and balance updates, including negative balances.
 - Bottom navigation for Accounts, Month, Goals, Investments, and Profile.
 - Accounts shows a five-account preview, pages of 50 for management, and per-currency totals across all active accounts. Profile holds user details and logout separately.
-- Tu mes creates one-time planned income and commitments with description,
-  positive ARS/USD amount, and financial date. It shows the current month and
+- Tu mes creates one-time or monthly planned income and commitments with description,
+  positive ARS/USD amount, and financial date. It includes month navigation and shows the selected month and
   all older pending records in separate lists with pages of 20, overdue labels,
   loading, errors, retry, and refresh. Money remains decimal strings.
-- Past and future dates are accepted. Future-month entries appear when that
-  month arrives; confirmation explains this. Financial dates use Argentina.
+- Past and future dates are accepted in DD/MM/YYYY format. Monthly repetitions
+  start on the chosen date; missing days use month end (31 January → 28 February
+  → 31 March in a non-leap year). Financial dates use Argentina.
 - Registering an expected event does not change account balances or snapshots.
   Received/paid states and record modifications remain for a later slice.
 - Goals and Investments remain clearly marked as coming soon.
@@ -74,6 +75,6 @@ npx expo-doctor
 - `src/auth/tokenStorage.native.ts`: encrypted native refresh-token storage.
 - `src/components/`: reusable presentation components.
 - `src/theme.ts`: shared design tokens.
-- `src/planning/`: one-time planning API, validation, and forms/lists.
+- `src/planning/`: one-time/monthly planning API, validation, and forms/lists.
 
 The detailed learning guide is in `docs/mobile-authentication-course.md`.

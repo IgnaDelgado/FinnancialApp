@@ -10,9 +10,9 @@ import { NoticeBanner } from '@/components/NoticeBanner';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { colors, fontFamily } from '@/theme';
 import { createPlanningRecord, listPlanningRecords, type PlanningKind, type PlanningRecord } from './api';
-import { displayFinancialDate, recordDate, validatePlanningInput } from './validation';
+import { displayFinancialDate, normalizePlanningDate, recordDate, validFinancialDate, validatePlanningInput } from './validation';
 
-export function PlanningSection({ kind, today }: { kind: PlanningKind; today: string }) {
+export function PlanningSection({ kind, today, period }: { kind: PlanningKind; today: string; period: string }) {
   const { withAccessToken, session, isBootstrapping } = useAuth();
   const ownerId = session?.user.id;
   const [page, setPage] = useState(0);
@@ -25,7 +25,8 @@ export function PlanningSection({ kind, today }: { kind: PlanningKind; today: st
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState<'ARS' | 'USD'>('ARS');
-  const [date, setDate] = useState(today);
+  const [date, setDate] = useState(displayFinancialDate(period === today.slice(0, 7) ? today : `${period}-01`));
+  const [recurrence, setRecurrence] = useState<'ONE_TIME' | 'MONTHLY'>('ONE_TIME');
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -43,7 +44,7 @@ export function PlanningSection({ kind, today }: { kind: PlanningKind; today: st
     const version = ++requestVersion.current;
     setLoading(true); setLoadError(null);
     if (isBootstrapping || !ownerId) return () => { requestVersion.current++; };
-    const [year, month] = today.split('-');
+    const [year, month] = period.split('-');
     void authenticated.current((token) => listPlanningRecords(token, kind, year, month, page * 20))
       .then((result) => {
         if (version !== requestVersion.current) return;
@@ -53,7 +54,7 @@ export function PlanningSection({ kind, today }: { kind: PlanningKind; today: st
         setLoadError(error instanceof ApiError ? error.message : 'No pudimos cargar los registros.'); setLoading(false);
       });
     return () => { requestVersion.current++; };
-  }, [kind, page, revision, today, ownerId, isBootstrapping]));
+  }, [kind, page, revision, period, ownerId, isBootstrapping]));
 
   function reload(nextPage = page) {
     requestVersion.current++;
@@ -62,7 +63,7 @@ export function PlanningSection({ kind, today }: { kind: PlanningKind; today: st
 
   async function save() {
     if (submitting.current) return;
-    const result = validatePlanningInput(kind, description, amount, currency, date);
+    const result = validatePlanningInput(kind, description, amount, currency, date, recurrence);
     if (result.error) { setFormError(result.error); return; }
     if (!result.input) return;
     submitting.current = true; setSaving(true); setFormError(null);
@@ -70,9 +71,10 @@ export function PlanningSection({ kind, today }: { kind: PlanningKind; today: st
       await authenticated.current((token) => createPlanningRecord(token, kind, result.input));
       if (!mounted.current) return;
       setEditor(false); setDescription(''); setAmount('');
-      setMessage(date.slice(0, 7) > today.slice(0, 7)
-        ? `Registro guardado para ${displayFinancialDate(date)}. Aparecerá en Tu mes cuando llegue ese mes.`
-        : 'Registro guardado. Tus saldos no cambiaron.');
+      const savedDate = 'expected_date' in result.input ? result.input.expected_date : result.input.due_date;
+      setMessage(recurrence === 'MONTHLY'
+        ? `Repetición mensual guardada desde ${displayFinancialDate(savedDate)}. Tus saldos no cambiaron.`
+        : `Registro guardado para ${displayFinancialDate(savedDate)}. Tus saldos no cambiaron.`);
       reload(0);
     } catch (error) {
       if (mounted.current) setFormError(error instanceof ApiError ? error.message : 'No pudimos guardar el registro.');
@@ -84,26 +86,31 @@ export function PlanningSection({ kind, today }: { kind: PlanningKind; today: st
 
   const income = kind === 'income';
   return <View style={styles.card}>
-    <Text accessibilityRole="header" style={styles.title}>{income ? 'Ingresos esperados' : 'Compromisos'}</Text>
+    <Text accessibilityRole="header" style={styles.title}>{income ? 'Ingresos esperados' : 'Gastos y compromisos'}</Text>
     <Text style={styles.help}>{income ? 'Dinero que esperás cobrar. Registrarlo no aumenta el saldo de tus cuentas.' : 'Obligaciones que debés pagar. Registrarlas no ejecuta un pago ni cambia tus cuentas.'}</Text>
     {message && <Text accessibilityRole="alert" style={styles.help}>{message}</Text>}
     <Pressable accessibilityRole="button" disabled={saving} style={styles.button} onPress={() => { setEditor(!editor); setFormError(null); setMessage(null); }}>
-      <Text style={styles.buttonText}>{editor ? 'Cerrar formulario' : income ? 'Agregar ingreso' : 'Agregar compromiso'}</Text>
+      <Text style={styles.buttonText}>{editor ? 'Cerrar formulario' : income ? 'Agregar ingreso' : 'Agregar gasto o compromiso'}</Text>
     </Pressable>
     {editor && <View style={styles.form}>
+      <Text style={styles.help}>Frecuencia</Text>
+      <View style={styles.row}>{([{value: 'ONE_TIME', label: 'Una vez'}, {value: 'MONTHLY', label: 'Todos los meses'}] as const).map((option) => <Pressable key={option.value} accessibilityRole="button" accessibilityState={{selected: recurrence === option.value}} disabled={saving} onPress={() => setRecurrence(option.value)} style={[styles.button, styles.flex, recurrence === option.value && styles.selected]}><Text style={styles.buttonText}>{option.label}</Text></Pressable>)}</View>
       <FormField icon={null} label="Descripción" value={description} onChangeText={setDescription} editable={!saving} maxLength={100} placeholder={income ? 'Ej.: trabajo freelance' : 'Ej.: alquiler'} />
       <FormField icon={null} label="Importe (sin separadores de miles)" value={amount} onChangeText={setAmount} editable={!saving} keyboardType="decimal-pad" placeholder="Ej.: 15000,50" />
       <Text style={styles.help}>Moneda</Text>
       <View style={styles.row}>{(['ARS', 'USD'] as const).map((value) => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: currency === value }} disabled={saving} onPress={() => setCurrency(value)} style={[styles.button, styles.flex, currency === value && styles.selected]}><Text style={styles.buttonText}>{value}</Text></Pressable>)}</View>
-      <FormField icon={null} label={income ? 'Fecha esperada (AAAA-MM-DD)' : 'Vencimiento (AAAA-MM-DD)'} value={date} onChangeText={setDate} editable={!saving} autoCapitalize="none" maxLength={10} placeholder="2026-10-15" />
-      <Text style={styles.help}>Por única vez · Pendiente. Podés registrar fechas anteriores.</Text>
+      <FormField icon={null} label={recurrence === 'MONTHLY' ? 'Primera fecha (DD/MM/AAAA)' : income ? 'Fecha esperada (DD/MM/AAAA)' : 'Vencimiento (DD/MM/AAAA)'} value={date} onChangeText={setDate} editable={!saving} autoCapitalize="none" maxLength={10} placeholder="15/10/2026" />
+      {recurrence === 'MONTHLY' ? <View style={styles.preview}>
+        <Text style={styles.name}>{validFinancialDate(normalizePlanningDate(date)) ? `Todos los meses, el día ${normalizePlanningDate(date).slice(8)}` : 'Elegí la primera fecha para fijar el día mensual'}</Text>
+        <Text style={styles.help}>Si ese día no existe, usamos el último día del mes. Cada registro queda pendiente; no se cobra ni se paga automáticamente.</Text>
+      </View> : <Text style={styles.help}>Por única vez · Pendiente. Podés registrar fechas anteriores.</Text>}
       {formError && <NoticeBanner message={formError} />}
-      <PrimaryButton label={income ? 'Guardar ingreso' : 'Guardar compromiso'} loading={saving} onPress={() => { void save(); }} />
+      <PrimaryButton label={recurrence === 'MONTHLY' ? 'Guardar repetición mensual' : income ? 'Guardar ingreso' : 'Guardar compromiso'} loading={saving} onPress={() => { void save(); }} />
     </View>}
     {loading ? <ActivityIndicator accessibilityLabel="Cargando registros" color={colors.forest} /> : loadError ? <><NoticeBanner message={loadError} /><Pressable accessibilityRole="button" style={styles.button} onPress={() => reload()}><Text style={styles.buttonText}>Reintentar</Text></Pressable></> : records.length === 0 ? <Text style={styles.help}>No hay registros en esta página para el mes ni pendientes anteriores.</Text> : records.map((record) => <View key={record.id} style={styles.entry}>
       <Text style={styles.name}>{record.description}</Text>
       <Text style={styles.amount}>{formatMoney(record.amount, record.currency)}</Text>
-      <Text style={styles.help}>{displayFinancialDate(recordDate(record))} · Pendiente · Por única vez</Text>
+      <Text style={styles.help}>{displayFinancialDate(recordDate(record))} · Pendiente · {record.recurrence === 'MONTHLY' ? 'Mensual' : 'Por única vez'}</Text>
       {recordDate(record) < today && <Text style={styles.overdue}>{income ? 'Fecha esperada vencida: todavía pendiente' : 'Vencido: todavía pendiente'}</Text>}
     </View>)}
     <Text style={styles.help}>Página {page + 1} · Fecha más antigua primero</Text>
@@ -120,6 +127,7 @@ const styles = StyleSheet.create({
   title: { color: colors.ink, fontFamily: fontFamily.displayMedium, fontSize: 21 },
   help: { color: colors.muted, fontFamily: fontFamily.body, fontSize: 13, lineHeight: 19 },
   form: { gap: 12 }, row: { flexDirection: 'row', gap: 10 }, flex: { flex: 1 },
+  preview: { backgroundColor: colors.paleGreen, borderRadius: 14, gap: 6, padding: 14 },
   entry: { borderBottomColor: colors.line, borderBottomWidth: 1, gap: 5, paddingVertical: 10 },
   name: { color: colors.ink, fontFamily: fontFamily.semibold, fontSize: 16 },
   amount: { color: colors.forest, fontFamily: fontFamily.bold, fontSize: 19 },

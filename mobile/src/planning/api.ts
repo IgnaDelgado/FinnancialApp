@@ -5,12 +5,13 @@ export type PlanningInput = {
   description: string;
   amount: string;
   currency: 'ARS' | 'USD';
-  recurrence: 'ONE_TIME';
+  recurrence: 'ONE_TIME' | 'MONTHLY';
 } & ({ expected_date: string } | { due_date: string });
 export type PlanningRecord = PlanningInput & {
   id: string;
   status: 'PLANNED';
   created_at: string;
+  template_id: string | null;
 };
 
 export function createPlanningRecord(token: string, kind: PlanningKind, input: PlanningInput): Promise<PlanningRecord> {

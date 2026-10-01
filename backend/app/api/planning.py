@@ -41,6 +41,7 @@ def create_income(
         amount=request.amount,
         currency=request.currency,
         expected_date=request.expected_date,
+        recurrence=request.recurrence,
     )
     return IncomeResponse.model_validate(income)
 
@@ -57,6 +58,7 @@ def create_commitment(
         amount=request.amount,
         currency=request.currency,
         due_date=request.due_date,
+        recurrence=request.recurrence,
     )
     return CommitmentResponse.model_validate(commitment)
 

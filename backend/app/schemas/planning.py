@@ -15,7 +15,7 @@ class PlannedCreateRequest(BaseModel):
     description: str = Field(min_length=1, max_length=100)
     amount: Decimal = Field(max_digits=20, decimal_places=2)
     currency: Currency
-    recurrence: Literal["ONE_TIME"] = "ONE_TIME"
+    recurrence: Literal["ONE_TIME", "MONTHLY"] = "ONE_TIME"
 
     @field_validator("description")
     @classmethod
@@ -66,7 +66,8 @@ class PlannedResponse(BaseModel):
     description: str
     amount: Decimal
     currency: Currency
-    recurrence: Literal["ONE_TIME"]
+    recurrence: Literal["ONE_TIME", "MONTHLY"]
+    template_id: UUID | None
     status: Literal["PLANNED"]
     created_at: datetime
 

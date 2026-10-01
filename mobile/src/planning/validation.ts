@@ -14,15 +14,28 @@ export function validFinancialDate(value: string): boolean {
   return !isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
 
-export function validatePlanningInput(kind: PlanningKind, description: string, amount: string, currency: string, date: string): { input: PlanningInput; error?: never } | { error: string; input?: never } {
+export function normalizePlanningDate(value: string): string {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim());
+  return match ? `${match[3]}-${match[2]}-${match[1]}` : value.trim();
+}
+
+export function monthAtOffset(today: string, offset: number): string {
+  const [year, month] = today.split('-');
+  const index = parseInt(year, 10) * 12 + parseInt(month, 10) - 1 + offset;
+  return `${Math.floor(index / 12).toString().padStart(4, '0')}-${(index % 12 + 1).toString().padStart(2, '0')}`;
+}
+
+export function validatePlanningInput(kind: PlanningKind, description: string, amount: string, currency: string, date: string, recurrence: string = 'ONE_TIME'): { input: PlanningInput; error?: never } | { error: string; input?: never } {
   const normalizedAmount = amount.trim().replace(',', '.');
   if (!description.trim() || description.trim().length > 100) return { error: 'Ingresá una descripción de hasta 100 caracteres.' };
   if (!/^(?:0|[1-9]\d{0,17})(?:\.\d{1,2})?$/.test(normalizedAmount) || !/[1-9]/.test(normalizedAmount)) {
     return { error: 'Ingresá un importe mayor que cero, con hasta 18 enteros y 2 decimales, sin separadores de miles.' };
   }
   if (currency !== 'ARS' && currency !== 'USD') return { error: 'Elegí ARS o USD.' };
-  if (!validFinancialDate(date)) return { error: 'Ingresá una fecha válida como AAAA-MM-DD, por ejemplo 2026-10-15.' };
-  return { input: { description: description.trim(), amount: normalizedAmount, currency, recurrence: 'ONE_TIME', ...(kind === 'income' ? { expected_date: date } : { due_date: date }) } };
+  const normalizedDate = normalizePlanningDate(date);
+  if (!validFinancialDate(normalizedDate)) return { error: 'Ingresá una fecha válida como DD/MM/AAAA, por ejemplo 15/10/2026.' };
+  if (recurrence !== 'ONE_TIME' && recurrence !== 'MONTHLY') return { error: 'Elegí una vez o todos los meses.' };
+  return { input: { description: description.trim(), amount: normalizedAmount, currency, recurrence, ...(kind === 'income' ? { expected_date: normalizedDate } : { due_date: normalizedDate }) } };
 }
 
 export function recordDate(record: PlanningRecord): string {

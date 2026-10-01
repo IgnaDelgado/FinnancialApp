@@ -31,11 +31,12 @@ The selected account offers confirmed removal through archival: it disappears
 from active accounts and totals while its records are retained.
 M2 is not yet complete: account-metadata editing and a dedicated archived-account
 management view remain. The first part of M3 adds creation and paginated
-consultation of one-time planned income and commitments in Tu mes. It displays
-the current financial month and older pending records separately by resource.
+consultation of one-time and monthly planned income and commitments in Tu mes.
+Users select a month and a first date for monthly repetitions. It displays
+the selected financial month and older pending records separately by resource.
 Amounts are positive ARS/USD decimals; past and future calendar dates are
 accepted. These records do not change accounts or calculate available money.
-M3 remains partial: status transitions, modifications, recurrence, installments,
+M3 remains partial: status transitions, modifications, stopping repetitions, installments,
 and budgets remain future work, as do M4–M9. The
 remaining M2 tasks and milestone order are tracked in
 [the roadmap](docs/roadmap.md). Email verification, password recovery, abuse
@@ -200,3 +201,17 @@ does not update the password stored in an existing volume. Preserve volumes
 that contain data and change the database role password explicitly. During
 initial setup only, an empty local volume can be recreated with
 `docker compose down -v`; this command permanently deletes that volume's data.
+
+### Mobile planning returns 404
+
+Rebuild the backend used by the phone after backend code changes:
+
+```powershell
+docker compose up --build -d --no-deps --wait backend
+```
+
+The backend now applies database migrations before startup. Keep the database
+volume. Check `/openapi.json` on the host/port configured by
+`EXPO_PUBLIC_API_URL`: it must include `/api/v1/income` and
+`/api/v1/commitments`. Reload Expo Go after updating. A host test server on
+another port does not update the Docker server used by the phone.

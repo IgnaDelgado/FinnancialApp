@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createPlanningRecord, listPlanningRecords } from '../src/planning/api.ts';
-import { displayFinancialDate, financialDate, validFinancialDate, validatePlanningInput } from '../src/planning/validation.ts';
+import { displayFinancialDate, financialDate, monthAtOffset, validFinancialDate, validatePlanningInput } from '../src/planning/validation.ts';
 import { ApiError } from '../src/auth/api.ts';
 
 test('planning validates positive exact monetary strings without rounding', () => {
@@ -27,6 +27,16 @@ test('calendar validation and month rollover use Argentina financial dates', () 
   for (const date of ['2024-02-29', '0001-01-01', '9999-12-31']) assert.equal(validFinancialDate(date), true, date);
 });
 
+test('monthly input retains its chosen day and uses exact decimal amounts', () => {
+  const result = validatePlanningInput('income', 'Sueldo sintético', '15000,50', 'ARS', '31/01/2027', 'MONTHLY');
+  assert.deepEqual(result.input, { description: 'Sueldo sintético', amount: '15000.50', currency: 'ARS', expected_date: '2027-01-31', recurrence: 'MONTHLY' });
+  assert.equal(validatePlanningInput('commitments', 'Alquiler sintético', '10.25', 'USD', '05/10/2026', 'MONTHLY').input.due_date, '2026-10-05');
+  assert.ok(validatePlanningInput('income', 'Synthetic', '1', 'ARS', '31/02/2027', 'MONTHLY').error);
+  assert.ok(validatePlanningInput('income', 'Synthetic', '1', 'ARS', '05/10/2026', 'WEEKLY').error);
+  assert.equal(monthAtOffset('2026-12-31', 1), '2027-01');
+  assert.equal(monthAtOffset('2027-01-01', -1), '2026-12');
+});
+
 test('planning API uses owned paginated routes, exact strings and visible errors', async () => {
   const originalFetch = globalThis.fetch;
   const originalUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -47,7 +57,7 @@ test('planning API uses owned paginated routes, exact strings and visible errors
         return new Response('[]');
       };
       assert.deepEqual(await listPlanningRecords('synthetic', kind, '2026', '10', 20), []);
-      for (const status of [401, 422, 500]) {
+      for (const status of [401, 404, 422, 500]) {
         globalThis.fetch = async () => new Response('{}', { status });
         await assert.rejects(createPlanningRecord('synthetic', kind, input), (error) => error instanceof ApiError && error.statusCode === status && !!error.message);
       }

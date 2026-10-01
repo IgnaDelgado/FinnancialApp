@@ -54,12 +54,14 @@ The account view shows each signed balance and a separate signed total of active
 
 ### Income, commitments, and flexible budgets
 
-**Current delivery: first part of M3 only.** Users create and consult one-time
+**Current delivery: planned records and monthly recurrence.** Users create and consult one-time or monthly
 `PLANNED` income and commitments in Tu mes. Each has a description, strictly
 positive ARS/USD amount, and valid past, present, or future calendar date.
-The current month and all older pending records remain accessible, with overdue
+The selected month and all older pending records remain accessible, with overdue
 labels and independent pagination. Creation does not change accounts or their
-history. Received/paid transitions, modifications, recurrence, installments,
+history. Monthly plans start on the chosen first date and use the last day of
+a month when the original day does not exist. Received/paid transitions,
+modifications, stopping repetitions, installments,
 and flexible budgets remain future work. M2 and M3 are still partial.
 
 Users record one-time or monthly income with an expected date and a status of `PLANNED`, `RECEIVED`, or `CANCELLED`. Only `PLANNED` income dated from today through month end qualifies for the month-end forecast. Overdue planned income is excluded and generates a warning. Expected income is never treated as received money.

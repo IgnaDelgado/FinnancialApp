@@ -124,7 +124,7 @@ def test_create_and_read_planned_records_preserves_money_dates_and_accounts(
         ("date", 0),
         ("date", "0000-01-01"),
         ("date", "2026-1-01"),
-        ("recurrence", "MONTHLY"),
+        ("recurrence", "WEEKLY"),
         ("status", "RECEIVED"),
         ("user_id", "00000000-0000-0000-0000-000000000000"),
     ],

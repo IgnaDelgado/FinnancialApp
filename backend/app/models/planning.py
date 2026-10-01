@@ -11,6 +11,7 @@ from sqlalchemy import (
     Index,
     Numeric,
     String,
+    UniqueConstraint,
     Uuid,
     func,
 )
@@ -18,6 +19,39 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.domain.currency import Currency
 from app.models.base import Base
+
+
+class MonthlyPlan(Base):
+    __tablename__ = "monthly_plans"
+    __table_args__ = (
+        CheckConstraint(
+            "kind IN ('income', 'commitments')", name="ck_monthly_plans_kind"
+        ),
+        CheckConstraint("amount > 0", name="ck_monthly_plans_positive_amount"),
+        CheckConstraint(
+            "length(trim(description)) > 0", name="ck_monthly_plans_description"
+        ),
+        Index("ix_monthly_plans_user_kind", "user_id", "kind"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    kind: Mapped[str] = mapped_column(String(11))
+    description: Mapped[str] = mapped_column(String(100))
+    amount: Mapped[Decimal] = mapped_column(Numeric(20, 2))
+    currency: Mapped[Currency] = mapped_column(
+        Enum(
+            Currency,
+            name="monthly_plan_currency",
+            native_enum=False,
+            create_constraint=True,
+        )
+    )
+    first_date: Mapped[date] = mapped_column(Date)
+    generated_through: Mapped[date] = mapped_column(Date)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
 
 class PlannedIncome(Base):
@@ -28,7 +62,19 @@ class PlannedIncome(Base):
             "length(trim(description)) > 0", name="ck_planned_income_description"
         ),
         CheckConstraint("status = 'PLANNED'", name="ck_planned_income_status"),
-        CheckConstraint("recurrence = 'ONE_TIME'", name="ck_planned_income_recurrence"),
+        CheckConstraint(
+            "recurrence IN ('ONE_TIME', 'MONTHLY')", name="ck_planned_income_recurrence"
+        ),
+        CheckConstraint(
+            "(recurrence = 'MONTHLY' AND template_id IS NOT NULL "
+            "AND recurrence_period IS NOT NULL) OR "
+            "(recurrence = 'ONE_TIME' AND template_id IS NULL "
+            "AND recurrence_period IS NULL)",
+            name="ck_planned_income_template",
+        ),
+        UniqueConstraint(
+            "template_id", "recurrence_period", name="uq_planned_income_template_period"
+        ),
         Index("ix_planned_income_user_date_id", "user_id", "expected_date", "id"),
     )
 
@@ -47,6 +93,10 @@ class PlannedIncome(Base):
     expected_date: Mapped[date] = mapped_column(Date)
     status: Mapped[str] = mapped_column(String(7), default="PLANNED")
     recurrence: Mapped[str] = mapped_column(String(8), default="ONE_TIME")
+    template_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("monthly_plans.id", ondelete="CASCADE")
+    )
+    recurrence_period: Mapped[date | None] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -61,7 +111,20 @@ class PlannedCommitment(Base):
         ),
         CheckConstraint("status = 'PLANNED'", name="ck_planned_commitments_status"),
         CheckConstraint(
-            "recurrence = 'ONE_TIME'", name="ck_planned_commitments_recurrence"
+            "recurrence IN ('ONE_TIME', 'MONTHLY')",
+            name="ck_planned_commitments_recurrence",
+        ),
+        CheckConstraint(
+            "(recurrence = 'MONTHLY' AND template_id IS NOT NULL "
+            "AND recurrence_period IS NOT NULL) OR "
+            "(recurrence = 'ONE_TIME' AND template_id IS NULL "
+            "AND recurrence_period IS NULL)",
+            name="ck_planned_commitments_template",
+        ),
+        UniqueConstraint(
+            "template_id",
+            "recurrence_period",
+            name="uq_planned_commitments_template_period",
         ),
         Index("ix_planned_commitments_user_date_id", "user_id", "due_date", "id"),
     )
@@ -81,6 +144,10 @@ class PlannedCommitment(Base):
     due_date: Mapped[date] = mapped_column(Date)
     status: Mapped[str] = mapped_column(String(7), default="PLANNED")
     recurrence: Mapped[str] = mapped_column(String(8), default="ONE_TIME")
+    template_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("monthly_plans.id", ondelete="CASCADE")
+    )
+    recurrence_period: Mapped[date | None] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

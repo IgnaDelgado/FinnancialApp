@@ -88,7 +88,7 @@ Technical timestamps are stored in UTC. Financial dates, today, due dates, and m
 The first M3 slice stores `planned_income` and `planned_commitments` in separate
 tables with owner foreign keys, `NUMERIC(20,2)` amounts, SQL `DATE` financial
 dates, UTC creation timestamps, and constraints for supported currencies,
-positive amounts, `PLANNED`, and `ONE_TIME`. The new additive Alembic migration
+positive amounts, `PLANNED`, and supported recurrence types. The new additive Alembic migration
 does not modify existing account tables. Domain validation rejects invalid
 amounts; schemas reject floats and invalid boundary data. Services create only
 planning records. Repositories scope all reads by authenticated owner and use
@@ -98,7 +98,7 @@ date/UUID ordering with bounded offset pagination.
 GET accepts optional year/month (defaulting to financial today), include_overdue
 (default true), limit (50 by default, at most 100), and offset. Prior-month planned
 records are included by default. Future-month records can be queried via API.
-Tu mes lists the current month and older pending records in independent pages
+Tu mes lists the selected month and older pending records in independent pages
 of 20. It refreshes on focus, date changes, explicit refresh, and successful
 creation. Request generations discard stale reads; form guards prevent concurrent
 submissions. This is not server-side idempotency: an ambiguous network failure
@@ -171,3 +171,20 @@ No provider or protocol is selected. An integration requires legal, commercial, 
 ## Architecture Decisions Still Pending
 
 Material decisions should be recorded under `docs/decisions/` when they are made. Authentication and mobile session handling are defined in ADRs 0002 and 0003. Remaining topics include package boundaries, API conventions beyond authentication, detailed persistence behavior, deployment, observability, backup, retention, and integration providers.
+
+## Monthly planning implementation
+
+`monthly_plans` owns immutable income/commitment templates. Instances retain a
+nullable template foreign key and recurrence period, constrained consistently
+with ONE_TIME/MONTHLY and unique per template/month. Services lock owned
+templates with SELECT FOR UPDATE and insert batches of at most 500 occurrences
+with ON CONFLICT DO NOTHING. An elapsed-month checkpoint bounds repeat work;
+requested future months do not advance it. Calendar generation is pure domain
+code. No scheduler, queue or new dependency is required. GET consultation can
+materialize planned instances, but never modifies recorded account cash.
+
+Local Docker startup applies Alembic migrations before Uvicorn starts. Code
+changes still require rebuilding the backend image; missing planning routes on
+an old image return 404. The mobile client translates that specific failure into
+an actionable backend-update message. Additive migrations preserve one-time
+records. Downgrade refuses to remove monthly tables when templates exist.
