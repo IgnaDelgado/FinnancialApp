@@ -27,8 +27,10 @@ and Investments remain clearly marked as coming soon.
 Mobile account balance history is now available when selecting an account,
 with pages of 20 snapshots, signed currency amounts, Argentina timestamps,
 and retry controls. Snapshots are complete balances, not transactions.
-M2 is not yet complete: account-metadata editing and archived-account
-management remain. M3–M9 (income,
+The selected account offers confirmed removal through archival: it disappears
+from active accounts and totals while its records are retained.
+M2 is not yet complete: account-metadata editing and a dedicated archived-account
+management view remain. M3–M9 (income,
 commitments, budgets, goals, explained availability, investments, net worth,
 simulations, monthly close, and release readiness) are future work. The
 remaining M2 tasks and milestone order are tracked in

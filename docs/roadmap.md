@@ -79,7 +79,9 @@ includes all active accounts in that currency, not just the visible page.
 Negative balances and browser-session restoration in development have been
 tested. Mobile now displays balance history from the selected account, in
 pages of 20 snapshots with Argentina timestamps and retry controls. Account
-metadata editing and archived-account management remain to finish M2. Production
+metadata editing and a dedicated archived-account management view remain to
+finish M2. Mobile account removal now requires confirmation and archives the
+account, refreshes active totals, and preserves persisted history. Production
 web session persistence needs a separate secure-cookie decision. The M3–M9
 milestones below are not implemented by this slice.
 
