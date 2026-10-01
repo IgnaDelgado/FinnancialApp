@@ -42,11 +42,15 @@ every user-owned resource is isolated from other users. Social login,
 multi-factor authentication, and the exact account-recovery flow are outside
 the initial requirement or **Pending decision**.
 
+Registration explains invalid email syntax, password-length and confirmation errors before submission. A duplicate email produces an explicit conflict message. The current Accounts tab shows recorded balances only; Profile has its own tab for user details and logout. Month, Goals, and Investments are visible in bottom navigation but clearly marked as coming soon. No unavailable financial metric is shown as if it were implemented.
+
 ### Financial accounts
 
-Users manually create cash, bank, digital-wallet, foreign-currency, investment, and other accounts in ARS or USD. Cash, bank, digital-wallet, and foreign-currency accounts are liquid by default; investment-account cash and other accounts are non-liquid by default. Investment positions are never liquid. Negative balances and overdrafts are not supported in the MVP.
+Users manually create cash, bank, digital-wallet, foreign-currency, investment, and other accounts in ARS or USD. Cash, bank, digital-wallet, and foreign-currency accounts are liquid by default; investment-account cash and other accounts are non-liquid by default. Investment positions are never liquid. Accounts may record negative balances, including overdrafts; the same overdraft must not also be counted as a separate liability.
 
 Each account records its name, type, currency, current balance, update time, and whether it is liquid and available for spending. Balance updates create historical snapshots. Referenced accounts are archived rather than deleted; archived accounts are excluded from calculations and cannot receive new allocations. An investment account's balance represents cash only, while its positions are valued separately.
+
+The account view shows each signed balance and a separate signed total of active account cash per currency. The current mobile home previews five accounts and account management displays paginated lists of 50; the total still includes every active account in its currency. This total is not net worth or safe-to-spend money. A negative account does not automatically reduce the positive liquid balance of another account in the availability calculation; the shortfall remains visible and is explained.
 
 ### Income, commitments, and flexible budgets
 

@@ -22,8 +22,12 @@ Native.
 - Store the native refresh token with Expo SecureStore and replace it after each
   successful rotation.
 - Do not persist authentication tokens in AsyncStorage.
-- Keep the web preview refresh token in memory only. A future production web
-  client requires a separate secure-cookie decision.
+- In development web previews only, store the refresh token in per-tab
+  `sessionStorage` so an F5 reload can restore the session. The token is removed
+  on logout and normally disappears when the tab or browser session closes.
+  This storage is accessible to JavaScript and therefore exposed to XSS; it is
+  not approved for a production web client. Production web continues to use
+  memory only until a separate secure, HttpOnly cookie and CSRF decision.
 - Configure the API URL through `EXPO_PUBLIC_API_URL`; no secret may use the
   `EXPO_PUBLIC_` prefix because Expo inlines those values into the client bundle.
 - Native Android and iOS requests do not depend on browser CORS. Expo Web may
@@ -40,6 +44,7 @@ Native.
 
 The authentication slice is ready to host later account and planning routes
 without moving token logic into screens. Native sessions survive application
-restarts, while access credentials remain short-lived. The client still needs a
+restarts; development web previews survive a reload within the same tab, while
+access credentials remain short-lived. The client still needs a
 real deployed HTTPS API URL for production and account recovery remains a
 pending product decision.

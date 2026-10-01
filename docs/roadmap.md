@@ -63,11 +63,24 @@ Implement ARS and USD accounts, current balances, historical balance snapshots, 
 - Account responses and operations enforce ownership.
 - Investment-account balances represent cash only and never include position value.
 - Cash, bank, digital-wallet, and foreign-currency accounts default to liquid; investment-account cash and other accounts default to non-liquid.
-- Negative balances and overdrafts are rejected.
+- Negative balances and overdrafts can be recorded in accounts and their history.
+- The account screen shows each signed balance and a signed total per currency, separate from safe-to-spend money.
 - Referenced accounts are archived instead of deleted, are excluded from calculations, and cannot receive new allocations.
 - Balance updates create historical snapshots.
 - The mobile app can list, create, and update accounts and cash balances.
 - Negative-balance and account-history behavior match approved rules.
+
+**Current status — partial implementation.** The API supports owned account
+creation, paginated active listing, read, signed balance updates, paginated
+history, per-currency cash totals, and archival. Balance changes append
+snapshots. Mobile supports creation and full-balance updates; home previews five
+accounts, while account management uses pages of 50. The displayed total
+includes all active accounts in that currency, not just the visible page.
+Negative balances and browser-session restoration in development have been
+tested. Mobile account-metadata editing, archived-account management, and a
+balance-history view remain to finish the user-facing M2 workflow. Production
+web session persistence needs a separate secure-cookie decision. The M3–M9
+milestones below are not implemented by this slice.
 
 ### M3 — Income, commitments, and flexible budgets
 

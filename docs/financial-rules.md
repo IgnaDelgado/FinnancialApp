@@ -20,7 +20,15 @@ This document is the authoritative specification for financial behavior. Impleme
 
 An account records a name, account type, currency, current balance, balance-update timestamp, archive status, and whether it is liquid and available for spending. Supported MVP account types include cash, bank, digital wallet, foreign-currency, investment, and other manual accounts. Cash, bank, digital-wallet, and foreign-currency accounts are liquid by default. Investment-account cash and other accounts are non-liquid by default. Investment positions are never liquid.
 
-An investment account's balance is cash only. Positions associated with it are valued separately; a broker total that includes positions is not an account balance for this product. Negative balances and overdrafts are rejected in the MVP. Each balance update records a historical snapshot. Referenced accounts are archived instead of deleted; archived accounts are excluded from calculations and cannot receive new allocations.
+An investment account's balance is cash only. Positions associated with it are valued separately; a broker total that includes positions is not an account balance for this product. Account balances may be negative to record an overdraft or amount owed in that account. A negative balance is not a second, independent liability; later net-worth calculations must count it once. Each balance update records a historical snapshot. Referenced accounts are archived instead of deleted; archived accounts are excluded from calculations and cannot receive new allocations.
+
+Creating an account records its initial balance as the first snapshot. Updating a balance replaces the current recorded amount and appends a snapshot, even if the amount is unchanged: the snapshot records that the user confirmed the balance again. A balance update is an absolute amount, not a deposit or withdrawal. Archived accounts cannot receive balance updates.
+
+Balance-history reads are paginated in chronological order by timestamp and snapshot ID. The API returns at most 50 snapshots by default, or up to 100 when requested; clients can request later pages with an offset. Pagination limits each response, but does not discard historical records or reduce database storage.
+
+Active-account lists are paginated separately from balance history. The API returns 50 accounts by default, at most 100 per request, ordered by creation time and ID from newest to oldest; an offset selects later pages. The account cash total still includes every active account, not only the displayed page. The mobile overview previews up to five accounts and the management view displays at most 50 at a time.
+
+The displayed **total account cash balance** is calculated independently for each currency by summing the current signed balances of active accounts once. It includes non-liquid account cash, but excludes archived accounts, historical snapshots, investment positions, other assets, and separate liabilities. It is neither net worth nor available-to-spend money. Individual account balances remain visible alongside the total. For example, an ARS 30,000 wallet and an ARS -20,000 bank account display individually and produce an ARS 10,000 total account cash balance.
 
 ## Money, Precision, and Rounding
 
@@ -64,7 +72,9 @@ available_today =
     - planned goal contributions due this month that are not already allocated
 ```
 
-Eligible current liquid balances come from active, nonnegative accounts marked liquid. Archived accounts and investment positions are excluded. Investment-account cash and other accounts default to non-liquid; cash, bank, digital-wallet, and foreign-currency accounts default to liquid. The calculation includes only inputs in the currency being calculated. Expected income is not part of `available_today`. Results are not clamped to zero; a negative result is a projected shortfall. The explanation must identify every included input and deduction.
+Eligible current liquid balances come from active accounts marked liquid, counting only each positive balance. A negative account balance does not cancel positive money held in another account for this calculation; it remains visible in the account list and signed total account cash balance, with an explicit shortfall warning in the future availability explanation. Archived accounts and investment positions are excluded. Investment-account cash and other accounts default to non-liquid; cash, bank, digital-wallet, and foreign-currency accounts default to liquid. The calculation includes only inputs in the currency being calculated. Expected income is not part of `available_today`. Results are not clamped to zero; a negative result after deductions is a projected shortfall. The explanation must identify every included input and deduction.
+
+Synthetic example: an ARS 30,000 liquid wallet and an ARS -20,000 liquid bank account contribute ARS 30,000 of eligible positive balances to `available_today`, before any allocations, commitments, budgets, or planned contributions are deducted. The signed total account cash balance is ARS 10,000. The negative bank balance must be disclosed, not silently omitted or deducted a second time.
 
 The definition of a planned goal contribution being due and treatment of pending transfers and debts are **Pending decision**.
 
@@ -164,7 +174,6 @@ At minimum, the system must reject or stop calculations that would:
 - Use a currency other than ARS or USD in the MVP.
 - Mix currencies without an explicit exchange rate.
 - Consolidate reference-currency net worth without a required manually entered exchange rate.
-- Store a negative account balance or overdraft.
 - Include an archived account in a calculation or create a new allocation from it.
 - Create an allocation whose source account, allocation, and goal currencies differ.
 - Allocate more than the unallocated eligible balance of the specified source account.

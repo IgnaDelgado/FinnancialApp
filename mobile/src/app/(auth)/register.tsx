@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '@/auth/api';
 import { useAuth } from '@/auth/AuthProvider';
+import { validateRegistration } from '@/auth/registrationValidation';
 import type { Currency } from '@/auth/types';
 import { AuthShell } from '@/components/AuthShell';
 import { FormField } from '@/components/FormField';
@@ -21,15 +22,15 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [attempted, setAttempted] = useState(false);
+  const [touched, setTouched] = useState({ email: false, password: false, confirmation: false });
 
-  const canSubmit = email.trim().length > 0 && password.length >= 8 && confirmation.length > 0;
+  const fieldErrors = validateRegistration(email, password, confirmation);
 
   async function handleSubmit() {
-    if (!canSubmit || submitting) return;
-    if (password !== confirmation) {
-      setError('Las contraseñas no coinciden.');
-      return;
-    }
+    if (submitting) return;
+    setAttempted(true);
+    if (Object.keys(fieldErrors).length > 0) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -53,28 +54,33 @@ export default function RegisterScreen() {
           icon={<Mail color={colors.muted} size={19} />}
           keyboardType="email-address"
           label="Correo electrónico"
-          onChangeText={setEmail}
+          onBlur={() => setTouched((current) => ({ ...current, email: true }))}
+          onChangeText={(value) => { setEmail(value); setError(null); }}
           placeholder="nombre@correo.com"
           value={email}
         />
+        {(touched.email || attempted) && fieldErrors.email ? <Text style={styles.fieldError}>{fieldErrors.email}</Text> : null}
         <FormField
           autoCapitalize="none"
           autoComplete="new-password"
           icon={<KeyRound color={colors.muted} size={19} />}
-          label="Contraseña · mínimo 8 caracteres"
-          onChangeText={setPassword}
+          label="Contraseña · entre 8 y 128 caracteres"
+          onBlur={() => setTouched((current) => ({ ...current, password: true }))}
+          onChangeText={(value) => { setPassword(value); setError(null); }}
           onToggleSecret={() => setShowPassword((current) => !current)}
           placeholder="Creá una frase segura"
           secure
           showSecret={showPassword}
           value={password}
         />
+        {(touched.password || attempted) && fieldErrors.password ? <Text style={styles.fieldError}>{fieldErrors.password}</Text> : null}
         <FormField
           autoCapitalize="none"
           autoComplete="new-password"
           icon={<ShieldCheck color={colors.muted} size={19} />}
           label="Confirmar contraseña"
-          onChangeText={setConfirmation}
+          onBlur={() => setTouched((current) => ({ ...current, confirmation: true }))}
+          onChangeText={(value) => { setConfirmation(value); setError(null); }}
           onSubmitEditing={handleSubmit}
           placeholder="Repetí tu contraseña"
           returnKeyType="done"
@@ -82,6 +88,7 @@ export default function RegisterScreen() {
           showSecret={showPassword}
           value={confirmation}
         />
+        {(touched.confirmation || attempted) && fieldErrors.confirmation ? <Text style={styles.fieldError}>{fieldErrors.confirmation}</Text> : null}
       </View>
 
       <Text style={styles.currencyLabel}>Moneda de referencia</Text>
@@ -108,7 +115,7 @@ export default function RegisterScreen() {
 
       {error ? <NoticeBanner message={error} /> : null}
       <PrimaryButton
-        disabled={!canSubmit}
+        disabled={submitting}
         label="Crear mi cuenta"
         loading={submitting}
         onPress={() => void handleSubmit()}
@@ -126,6 +133,7 @@ export default function RegisterScreen() {
 
 const styles = StyleSheet.create({
   fields: { gap: 7 },
+  fieldError: { color: colors.coral, fontFamily: fontFamily.medium, fontSize: 11.5, lineHeight: 16, marginBottom: 3, marginLeft: 2 },
   currencyLabel: { color: colors.slate, fontFamily: fontFamily.semibold, fontSize: 12.5, marginTop: 2 },
   currencyRow: { flexDirection: 'row', gap: 9, marginBottom: 3, marginTop: 3 },
   currencyOption: {

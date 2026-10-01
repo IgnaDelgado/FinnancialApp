@@ -1,6 +1,6 @@
 # Financial Plan mobile client
 
-Expo SDK 57 and React Native client for the M1 authentication flow.
+Expo SDK 57 and React Native client for authentication and manual financial accounts.
 
 ## What is implemented
 
@@ -10,11 +10,15 @@ Expo SDK 57 and React Native client for the M1 authentication flow.
 - Rotating refresh tokens stored with Expo SecureStore on native devices.
 - Session restoration when the native application starts.
 - Logout for the current device or every refresh session.
+- Development web preview sessions survive F5 in the same tab through `sessionStorage`; production web does not persist refresh tokens until a secure-cookie design is approved.
 - Expo Router public and authenticated route groups.
+- Registration feedback for invalid email, password length, confirmation, and duplicate email.
+- Account creation and balance updates, including negative balances.
+- Bottom navigation for Accounts, Month, Goals, Investments, and Profile.
+- Accounts shows a five-account preview, pages of 50 for management, and per-currency totals across all active accounts. Profile holds user details and logout separately.
+- Month, Goals, and Investments are clearly marked as coming soon; they do not show invented values or save data.
 
-Financial accounts, balances, budgets, goals, and investments belong to later
-roadmap milestones. The authenticated home intentionally displays no invented
-balance.
+Budgets, goals, investments, net worth, and safe-to-spend calculations belong to later roadmap milestones. The Accounts tab shows only recorded account cash and labels it separately from those future calculations.
 
 ## Configure the backend URL
 
@@ -49,6 +53,7 @@ Quality checks:
 ```powershell
 npm run lint
 npm run typecheck
+npm test
 npx expo-doctor
 ```
 
@@ -56,6 +61,7 @@ npx expo-doctor
 
 - `src/app/`: file-based routes and layouts.
 - `src/auth/api.ts`: HTTP requests and API error translation.
+- `src/auth/registrationValidation.ts`: immediate registration-field feedback.
 - `src/auth/AuthProvider.tsx`: session lifecycle and token rotation.
 - `src/auth/tokenStorage.native.ts`: encrypted native refresh-token storage.
 - `src/components/`: reusable presentation components.

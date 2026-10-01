@@ -67,7 +67,7 @@ Endpoint shapes, versioning, error envelopes, and public API contracts are **Pen
 
 The Expo/React Native TypeScript application presents registration, setup, planning, investment, simulation, and monthly-close workflows. Each completed domain milestone includes its minimal usable mobile screen; mobile work is not deferred to a final integration phase. The application must show actual values, forecasts, and assumptions distinctly and provide calculation explanations supplied by approved backend behavior.
 
-Navigation, state management, API-client implementation, offline behavior, localization, accessibility targets, and secure credential storage are **Pending decision**.
+The authenticated mobile shell currently uses Expo Router bottom tabs for Accounts, Month, Goals, Investments, and Profile. Accounts is the only financial tab with working data; the other financial tabs explicitly show a coming-soon state. Profile is separate from account balances and contains user data and logout controls. State management beyond authentication, offline behavior, localization, and detailed accessibility targets are **Pending decision**.
 
 ## Persistence with PostgreSQL
 
@@ -81,6 +81,8 @@ Every allocation references one source account and one goal. The account, alloca
 
 Balance changes create historical snapshots. Referenced accounts and goals are archived instead of deleted, and archived accounts are excluded from calculations and new allocations. `MONTHLY` recurrence templates create period instances idempotently. Confirmed monthly closes are locked; an explicit reopen event is recorded before a correction. Detailed table shapes, snapshot correction policy, archival behavior for unreferenced records, and concurrency controls are **Pending decision**.
 
+The first accounts slice persists `financial_accounts` and `account_balance_snapshots` separately. An account stores its current signed cash balance, currency, liquidity flag, and last balance-update time. Creation and each absolute balance update append a snapshot in the same transaction. The redundant general-purpose account `updated_at` column was removed; balance and archive timestamps remain. Account queries and mutations always include the authenticated user's identifier; archived accounts are hidden from active-account operations. The versioned account API currently supports create, paginated active listing, read, balance update, currency-scoped signed cash totals, paginated balance history, and archive. Account cash totals are independent of listing pages. The mobile overview previews five accounts and the management screen uses bounded pages of 50; account metadata editing and archived-account management remain for a later bounded slice.
+
 Technical timestamps are stored in UTC. Financial dates, today, due dates, and month boundaries use `America/Argentina/Cordoba`.
 
 ## Core Data Flows
@@ -91,7 +93,7 @@ The mobile client submits user-entered data. The API validates its boundary shap
 
 ### Calculate available money
 
-A service groups the user's relevant inputs by currency. For each currency, the domain calculates `available_today` from active nonnegative liquid balances, allocations, unpaid commitments due through month end, remaining flexible budget, and unallocated planned goal contributions due this month. It then adds only `PLANNED` income dated from today through month end for `available_until_month_end`. Overdue planned income is excluded with a warning; overdue unpaid commitments remain deducted. Negative values remain visible as projected shortfalls. The backend returns each per-currency result with its included and excluded inputs.
+A service groups the user's relevant inputs by currency. For each currency, the domain will calculate `available_today` from positive liquid account balances, allocations, unpaid commitments due through month end, remaining flexible budget, and unallocated planned goal contributions due this month. Negative account balances are displayed and explained but do not offset another account's positive spendable balance. The eventual forecast adds only qualifying `PLANNED` income dated from today through month end. Overdue planned income is excluded with a warning; overdue unpaid commitments remain deducted. Negative results remain visible as projected shortfalls. The backend will return each per-currency result with its included and excluded inputs. Outstanding decisions about contribution due dates and other debts still prevent implementation of the full availability calculation.
 
 ### Value investments and net worth
 
@@ -118,6 +120,8 @@ logout-all revokes every family for the user. These choices and reuse detection
 are recorded in `docs/decisions/0002-jwt-refresh-sessions.md`. Recovery flow,
 retention policy, and detailed audit requirements remain **Pending decision**.
 
+Registration validates email and password at the API boundary, while the mobile form provides immediate field-level feedback. The unique email constraint remains authoritative for conflicts and the API returns a specific 409 response for an existing address. This exposes account existence; registration and login rate limiting remain required before public launch.
+
 ## Currency and Calculation Boundaries
 
 All monetary operations use the approved decimal types and rounding policy. Availability is calculated independently for ARS and USD and is never converted or combined. The user's default reference currency is ARS and may be changed to USD. Reference-currency net worth may combine currencies only with an explicit manually entered exchange rate whose value, manual source, quote direction, and UTC timestamp are retained. A missing required rate prevents consolidation while separate currency totals remain available. The domain keeps cash balances, allocations, internal transfers, expected income, simulations, and investment market value semantically distinct.
@@ -132,7 +136,7 @@ Ports, health checks, volume strategy, synthetic seed-data workflow, and environ
 
 ## CI/CD and Deployment
 
-GitHub Actions runs on pull requests and pushes to `main`. Backend checks use Ruff for formatting and linting, mypy for static type checking, and pytest with pytest-cov for tests and coverage reporting. Mobile checks use ESLint and `tsc --noEmit`. Every configured check is blocking. Coverage is reported without a blocking threshold initially.
+GitHub Actions runs on pull requests and pushes to `main`. Backend checks use Ruff for formatting and linting, mypy for static type checking, and pytest with pytest-cov for tests and coverage reporting. Mobile checks use ESLint, `tsc --noEmit`, and Node's built-in test runner for pure TypeScript validation and API error handling. Every configured check is blocking. Coverage is reported without a blocking threshold initially.
 
 Deployment initially targets a managed cloud environment. Branch protections, artifact strategy, deployment provider, environments, approval gates, rollback process, backups, recovery objectives, logging, and monitoring are **Pending decision**.
 
