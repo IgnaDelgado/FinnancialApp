@@ -16,6 +16,7 @@ class PlannedCreateRequest(BaseModel):
     amount: Decimal = Field(max_digits=20, decimal_places=2)
     currency: Currency
     recurrence: Literal["ONE_TIME", "MONTHLY"] = "ONE_TIME"
+    preferred_account_id: UUID | None = None
 
     @field_validator("description")
     @classmethod
@@ -69,6 +70,9 @@ class PlannedResponse(BaseModel):
     recurrence: Literal["ONE_TIME", "MONTHLY"]
     template_id: UUID | None
     account_id: UUID | None
+    preferred_account_id: UUID | None
+    remember_account: bool
+    preferred_account_name: str | None
     confirmed_at: datetime | None
     already_in_balance: bool | None
     created_at: datetime
@@ -89,3 +93,4 @@ class ConfirmationRequest(BaseModel):
 
     account_id: UUID
     already_in_balance: bool = Field(strict=True)
+    remember_account: bool = Field(default=False, strict=True)

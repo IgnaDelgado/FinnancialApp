@@ -49,3 +49,20 @@ test('confirmation shows resource, retry conflict and currency errors without re
     else process.env.EXPO_PUBLIC_API_URL = originalUrl;
   }
 });
+
+test('monthly confirmation explicitly remembers an account when requested', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalUrl = process.env.EXPO_PUBLIC_API_URL;
+  process.env.EXPO_PUBLIC_API_URL = 'http://example.test';
+  try {
+    globalThis.fetch = async (url, options) => {
+      assert.deepEqual(JSON.parse(options.body), { account_id: 'account', already_in_balance: false, remember_account: true });
+      return new Response(JSON.stringify({ status: 'RECEIVED', remember_account: true }));
+    };
+    assert.equal((await confirmPlanningRecord('synthetic', 'income', 'record', 'account', false, true)).remember_account, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalUrl === undefined) delete process.env.EXPO_PUBLIC_API_URL;
+    else process.env.EXPO_PUBLIC_API_URL = originalUrl;
+  }
+});

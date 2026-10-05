@@ -225,8 +225,14 @@ another port does not update the Docker server used by the phone.
 Inicio now shows current liquid cash minus registered pending bills through month
 end, with a separate expected-income forecast and an additional-expense preview.
 The first-use flow asks for cash balances and major bills; daily purchase logging
-is optional. Mi plan separates payments and income. Only usable areas appear in
+is optional. Movimientos separates payments and income. Only usable areas appear in
 the tab bar. This limited snapshot is not safe-to-spend money: daily budgets,
-goal reserves still require the remaining MVP work. Mi plan now lets users mark
+goal reserves still require the remaining MVP work. Movimientos now lets users mark
 full income as received and full commitments as paid, with explicit account
 selection and reconciliation. Notifications and budgets remain future work.
+
+Movimientos now separates pending cards from modal forms and collapsed history.
+Choose an account on creation; monthly occurrences inherit it automatically.
+Existing monthly records can remember the selected account on confirmation.
+Saved accounts simplify confirmation, but a scheduled date never changes cash
+without the user's explicit receipt/payment confirmation.

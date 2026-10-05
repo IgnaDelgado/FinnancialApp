@@ -31,6 +31,49 @@ class PlanningRepository:
     def add_income(self, income: PlannedIncome) -> None:
         self._session.add(income)
 
+    def get_record(
+        self, user_id: UUID, record_id: UUID, *, is_income: bool
+    ) -> PlannedIncome | PlannedCommitment | None:
+        model = PlannedIncome if is_income else PlannedCommitment
+        return cast(
+            PlannedIncome | PlannedCommitment | None,
+            self._session.scalar(
+                select(model).where(model.id == record_id, model.user_id == user_id)
+            ),
+        )
+
+    def lock_template(self, user_id: UUID, template_id: UUID) -> MonthlyPlan | None:
+        return self._session.scalar(
+            select(MonthlyPlan)
+            .where(
+                MonthlyPlan.id == template_id,
+                MonthlyPlan.user_id == user_id,
+            )
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+
+    def pending_occurrences(
+        self, user_id: UUID, template_id: UUID, *, is_income: bool
+    ) -> list[PlannedIncome | PlannedCommitment]:
+        model = PlannedIncome if is_income else PlannedCommitment
+        return list(
+            cast(
+                Iterable[PlannedIncome | PlannedCommitment],
+                self._session.scalars(
+                    select(model)
+                    .where(
+                        model.user_id == user_id,
+                        model.template_id == template_id,
+                        model.status == "PLANNED",
+                    )
+                    .order_by(model.id)
+                    .with_for_update()
+                    .execution_options(populate_existing=True)
+                ).all(),
+            )
+        )
+
     def add_commitment(self, commitment: PlannedCommitment) -> None:
         self._session.add(commitment)
 
@@ -59,6 +102,7 @@ class PlanningRepository:
                     "description": plan.description,
                     "amount": plan.amount,
                     "currency": plan.currency,
+                    "preferred_account_id": plan.preferred_account_id,
                     date_field: occurrence,
                     "status": "PLANNED",
                     "recurrence": "MONTHLY",

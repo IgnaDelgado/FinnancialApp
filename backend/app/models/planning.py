@@ -16,10 +16,11 @@ from sqlalchemy import (
     Uuid,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.domain.currency import Currency
 from app.models.base import Base
+from app.models.financial_account import FinancialAccount
 
 
 class MonthlyPlan(Base):
@@ -49,6 +50,9 @@ class MonthlyPlan(Base):
         )
     )
     first_date: Mapped[date] = mapped_column(Date)
+    preferred_account_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("financial_accounts.id")
+    )
     generated_through: Mapped[date] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
@@ -101,6 +105,20 @@ class PlannedIncome(Base):
         )
     )
     expected_date: Mapped[date] = mapped_column(Date)
+    preferred_account_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("financial_accounts.id")
+    )
+    preferred_account: Mapped[FinancialAccount | None] = relationship(
+        foreign_keys=[preferred_account_id], lazy="selectin"
+    )
+
+    @property
+    def preferred_account_name(self) -> str | None:
+        return self.preferred_account.name if self.preferred_account else None
+
+    remember_account: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
     status: Mapped[str] = mapped_column(String(8), default="PLANNED")
     account_id: Mapped[UUID | None] = mapped_column(ForeignKey("financial_accounts.id"))
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -164,6 +182,20 @@ class PlannedCommitment(Base):
         )
     )
     due_date: Mapped[date] = mapped_column(Date)
+    preferred_account_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("financial_accounts.id")
+    )
+    preferred_account: Mapped[FinancialAccount | None] = relationship(
+        foreign_keys=[preferred_account_id], lazy="selectin"
+    )
+
+    @property
+    def preferred_account_name(self) -> str | None:
+        return self.preferred_account.name if self.preferred_account else None
+
+    remember_account: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
     status: Mapped[str] = mapped_column(String(7), default="PLANNED")
     account_id: Mapped[UUID | None] = mapped_column(ForeignKey("financial_accounts.id"))
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

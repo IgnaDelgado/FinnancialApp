@@ -6,6 +6,7 @@ export type PlanningInput = {
   amount: string;
   currency: 'ARS' | 'USD';
   recurrence: 'ONE_TIME' | 'MONTHLY';
+  preferred_account_id?: string | null;
 } & ({ expected_date: string } | { due_date: string });
 export type PlanningRecord = PlanningInput & {
   id: string;
@@ -13,17 +14,19 @@ export type PlanningRecord = PlanningInput & {
   account_id: string | null;
   confirmed_at: string | null;
   already_in_balance: boolean | null;
+  remember_account: boolean;
+  preferred_account_name?: string | null;
   created_at: string;
   template_id: string | null;
 };
 
 export function confirmPlanningRecord(
   token: string, kind: PlanningKind, id: string,
-  accountId: string, alreadyInBalance: boolean,
+  accountId: string, alreadyInBalance: boolean, rememberAccount = false,
 ): Promise<PlanningRecord> {
   return request<PlanningRecord>(`/api/v1/${kind}/${encodeURIComponent(id)}/confirm`, {
     accessToken: token, method: 'POST',
-    body: { account_id: accountId, already_in_balance: alreadyInBalance },
+    body: { account_id: accountId, already_in_balance: alreadyInBalance, ...(rememberAccount ? { remember_account: true } : {}) },
   });
 }
 

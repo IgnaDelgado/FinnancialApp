@@ -285,6 +285,13 @@ account selection, balance updates or the already-included option, atomic histor
 and safe retries for both one-time and monthly occurrences. Budgets and
 notifications remain unimplemented.
 
+Saved accounts are now delivered: creation stores the preference, generation
+inherits it, and explicit monthly confirmation can remember it for pending and
+future occurrences. Movimientos replaces the former Mi plan label, separates
+modal forms from the list, and collapses completed records into paged history.
+This still requires explicit receipt/payment confirmation. Automatic reminders,
+budget spending, corrections and other monthly-template edits remain future work.
+
 Next small slices: settle correction semantics, category aggregation and combined
 spending reconciliation; implement budget planning and confirmed spending;
 finally implement reminders

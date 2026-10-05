@@ -23,19 +23,17 @@ export default function MonthScreen() {
   return <SafeAreaView style={styles.screen} edges={['top']}>
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
       <View style={styles.heading}>
-        <Text accessibilityRole="header" style={styles.title}>Mi plan</Text>
-        <Text style={styles.month}>{monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}</Text>
-        <View style={styles.navigation}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Mes anterior" disabled={period === '0001-01'} style={styles.button} onPress={() => setMonthOffset((value) => value - 1)}><Text style={styles.buttonText}>‹ Anterior</Text></Pressable>
-          <Pressable accessibilityRole="button" style={styles.button} onPress={() => setMonthOffset(0)}><Text style={styles.buttonText}>Este mes</Text></Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="Mes siguiente" disabled={period === '9999-12'} style={styles.button} onPress={() => setMonthOffset((value) => value + 1)}><Text style={styles.buttonText}>Siguiente ›</Text></Pressable>
-        </View>
-        <Text style={styles.help}>Anotá los pagos importantes y lo que esperás cobrar. Los mensuales se repiten solos.</Text>
-        <Text style={styles.help}>Los planes no cambian tus saldos hasta que confirmás un cobro o pago. Si ya estaba incluido, podés confirmarlo sin cambiar el saldo.</Text>
+        <Text accessibilityRole="header" style={styles.title}>Movimientos</Text>
+        <Text style={styles.help}>Dejá listo cada mes. Confirmá cuando cobrás o pagás.</Text>
       </View>
-      <View style={styles.navigation}>{([{ value: 'commitments', label: 'Lo que pago' }, { value: 'income', label: 'Lo que cobro' }] as const).map((option) => <Pressable key={option.value} accessibilityRole="button" accessibilityState={{ selected: kind === option.value }} style={[styles.button, kind === option.value && styles.selected]} onPress={() => setKind(option.value)}><Text style={styles.buttonText}>{option.label}</Text></Pressable>)}</View>
+      <View style={styles.monthNavigation}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Mes anterior" disabled={period === '0001-01'} style={styles.monthArrow} onPress={() => setMonthOffset((value) => value - 1)}><Text style={styles.arrowText}>‹</Text></Pressable>
+        <Text style={styles.month}>{monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Mes siguiente" disabled={period === '9999-12'} style={styles.monthArrow} onPress={() => setMonthOffset((value) => value + 1)}><Text style={styles.arrowText}>›</Text></Pressable>
+      </View>
+      {monthOffset !== 0 && <Pressable accessibilityRole="button" style={styles.monthArrow} onPress={() => setMonthOffset(0)}><Text style={styles.buttonText}>Volver a este mes</Text></Pressable>}
+      <View style={styles.navigation}>{([{ value: 'commitments', label: 'Pagos' }, { value: 'income', label: 'Cobros' }] as const).map((option) => <Pressable key={option.value} accessibilityRole="button" accessibilityState={{ selected: kind === option.value }} style={[styles.button, kind === option.value && styles.selected]} onPress={() => setKind(option.value)}><Text style={styles.buttonText}>{option.label}</Text></Pressable>)}</View>
       <PlanningSection key={`${kind}-${year}-${month}`} kind={kind} today={today} period={period} />
-      <Text style={styles.help}>Confirmá cuando ocurra el cobro o pago. Editar, deshacer confirmaciones y detener repeticiones todavía no está disponible.</Text>
     </ScrollView>
   </SafeAreaView>;
 }
@@ -47,6 +45,9 @@ const styles = StyleSheet.create({
   month: { color: colors.forest, fontFamily: fontFamily.semibold, fontSize: 17 },
   selected: { borderWidth: 2, borderColor: colors.forest },
   navigation: { flexDirection: 'row', gap: 8 },
+  monthNavigation: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  monthArrow: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  arrowText: { color: colors.forest, fontSize: 28 },
   button: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 44, backgroundColor: colors.paleGreen, borderRadius: 12 },
   buttonText: { color: colors.forest, fontFamily: fontFamily.semibold, fontSize: 12 },
   title: { color: colors.ink, fontFamily: fontFamily.displayMedium, fontSize: 30 },

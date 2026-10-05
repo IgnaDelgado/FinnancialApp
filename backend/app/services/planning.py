@@ -40,7 +40,23 @@ class PlanningService:
         account_id: UUID,
         already_in_balance: bool,
         is_income: bool,
+        remember_account: bool = False,
     ) -> PlannedIncome | PlannedCommitment:
+        # Lock the template before its occurrences, as monthly generation does.
+        template = None
+        pending: list[PlannedIncome | PlannedCommitment] = []
+        if remember_account:
+            initial = self._records.get_record(user_id, record_id, is_income=is_income)
+            if initial is None:
+                raise PlanningRecordNotFoundError
+            if initial.template_id is None:
+                raise ValueError(
+                    "Solo los movimientos mensuales pueden recordar una cuenta."
+                )
+            template = self._records.lock_template(user_id, initial.template_id)
+            pending = self._records.pending_occurrences(
+                user_id, initial.template_id, is_income=is_income
+            )
         record = self._records.lock_record(user_id, record_id, is_income=is_income)
         if record is None:
             raise PlanningRecordNotFoundError
@@ -48,6 +64,7 @@ class PlanningService:
             if (
                 record.account_id != account_id
                 or record.already_in_balance != already_in_balance
+                or record.remember_account != remember_account
             ):
                 raise ConfirmationConflictError
             # Identical retries succeed even if the account has since been archived.
@@ -59,6 +76,10 @@ class PlanningService:
             raise PlanningRecordNotFoundError
         if account.currency != record.currency:
             raise ValueError("La cuenta y el movimiento deben tener la misma moneda.")
+        if template is not None:
+            template.preferred_account_id = account.id
+            for occurrence in pending:
+                occurrence.preferred_account_id = account.id
         confirmed_at = datetime.now(UTC)
         if not already_in_balance:
             account.current_balance = confirmed_balance(
@@ -79,6 +100,7 @@ class PlanningService:
         record.status = "RECEIVED" if is_income else "PAID"
         record.account_id = account.id
         record.already_in_balance = already_in_balance
+        record.remember_account = remember_account
         record.confirmed_at = confirmed_at
         self._session.commit()
         self._session.refresh(record)
@@ -93,6 +115,7 @@ class PlanningService:
         amount: Decimal,
         currency: Currency,
         first_date: date,
+        preferred_account_id: UUID | None = None,
     ) -> MonthlyPlan:
         plan = MonthlyPlan(
             user_id=user_id,
@@ -101,6 +124,7 @@ class PlanningService:
             amount=validate_planned_amount(amount),
             currency=currency,
             first_date=first_date,
+            preferred_account_id=preferred_account_id,
             generated_through=first_date.replace(day=1),
         )
         self._records.add_monthly_plan(plan)
@@ -136,7 +160,9 @@ class PlanningService:
         currency: Currency,
         expected_date: date,
         recurrence: Literal["ONE_TIME", "MONTHLY"] = "ONE_TIME",
+        preferred_account_id: UUID | None = None,
     ) -> PlannedIncome:
+        self._validate_preferred_account(user_id, preferred_account_id, currency)
         plan = (
             self._create_monthly_plan(
                 user_id=user_id,
@@ -145,6 +171,7 @@ class PlanningService:
                 amount=amount,
                 currency=currency,
                 first_date=expected_date,
+                preferred_account_id=preferred_account_id,
             )
             if recurrence == "MONTHLY"
             else None
@@ -155,6 +182,7 @@ class PlanningService:
             amount=validate_planned_amount(amount),
             currency=currency,
             expected_date=expected_date,
+            preferred_account_id=preferred_account_id,
             recurrence=recurrence,
             template_id=plan.id if plan else None,
             recurrence_period=expected_date.replace(day=1) if plan else None,
@@ -173,7 +201,9 @@ class PlanningService:
         currency: Currency,
         due_date: date,
         recurrence: Literal["ONE_TIME", "MONTHLY"] = "ONE_TIME",
+        preferred_account_id: UUID | None = None,
     ) -> PlannedCommitment:
+        self._validate_preferred_account(user_id, preferred_account_id, currency)
         plan = (
             self._create_monthly_plan(
                 user_id=user_id,
@@ -182,6 +212,7 @@ class PlanningService:
                 amount=amount,
                 currency=currency,
                 first_date=due_date,
+                preferred_account_id=preferred_account_id,
             )
             if recurrence == "MONTHLY"
             else None
@@ -192,6 +223,7 @@ class PlanningService:
             amount=validate_planned_amount(amount),
             currency=currency,
             due_date=due_date,
+            preferred_account_id=preferred_account_id,
             recurrence=recurrence,
             template_id=plan.id if plan else None,
             recurrence_period=due_date.replace(day=1) if plan else None,
@@ -200,6 +232,22 @@ class PlanningService:
         self._session.commit()
         self._session.refresh(commitment)
         return commitment
+
+    def _validate_preferred_account(
+        self,
+        user_id: UUID,
+        account_id: UUID | None,
+        currency: Currency,
+    ) -> None:
+        if account_id is None:
+            return
+        account = FinancialAccountRepository(self._session).get_active(
+            user_id, account_id, lock=True
+        )
+        if account is None:
+            raise PlanningRecordNotFoundError
+        if account.currency != currency:
+            raise ValueError("La cuenta y el movimiento deben tener la misma moneda.")
 
     def list_income(
         self,

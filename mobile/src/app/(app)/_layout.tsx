@@ -19,7 +19,7 @@ export default function PrivateLayout() {
       tabBarStyle: { backgroundColor: colors.white, borderTopColor: colors.line, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 10), height: 80 + insets.bottom },
     }}>
       <Tabs.Screen name="index" options={{ title: 'Inicio', tabBarIcon: ({ color, size }) => <House color={color} size={size} /> }} />
-      <Tabs.Screen name="month" options={{ title: 'Mi plan', tabBarIcon: ({ color, size }) => <CalendarDays color={color} size={size} /> }} />
+      <Tabs.Screen name="month" options={{ title: 'Movimientos', tabBarIcon: ({ color, size }) => <CalendarDays color={color} size={size} /> }} />
       <Tabs.Screen name="goals" options={{ href: null }} />
       <Tabs.Screen name="investments" options={{ href: null }} />
       <Tabs.Screen name="profile" options={{ title: 'Perfil', tabBarIcon: ({ color, size }) => <UserRound color={color} size={size} /> }} />

@@ -14,7 +14,7 @@ Expo SDK 57 and React Native client for authentication and manual financial acco
 - Expo Router public and authenticated route groups.
 - Registration feedback for invalid email, password length, confirmation, and duplicate email.
 - Account creation and balance updates, including negative balances.
-- Bottom navigation exposes Inicio, Mi plan and Perfil. Account management is
+- Bottom navigation exposes Inicio, Movimientos and Perfil. Account management is
   available from home; unfinished goal/investment tabs are hidden.
 - Accounts shows a five-account preview, pages of 50 for management, and per-currency totals across all active accounts. Profile holds user details and logout separately.
 - Tu mes creates one-time or monthly planned income and commitments with description,
@@ -25,10 +25,14 @@ Expo SDK 57 and React Native client for authentication and manual financial acco
   start on the chosen date; missing days use month end (31 January → 28 February
   → 31 March in a non-leap year). Financial dates use Argentina.
 - Registering an expected event does not change account balances or snapshots.
-  Mi plan now confirms full received income or paid commitments, selecting a
+  Movimientos now confirms full received income or paid commitments, selecting a
   same-currency account and either updating its balance or marking the movement
   as already included. Safe retries prevent duplicate movements. Confirmations
   cannot be undone in this slice; record modifications remain future work.
+- Movimientos keeps pending cards visible and completed records collapsed in
+  page history. Creation and confirmation open separate sheets. Creation saves
+  an account and derives currency from it; monthly occurrences inherit that
+  account. Existing monthly records can remember their account on confirmation.
 - Inicio shows cash after pending bills, a separate forecast, setup guidance and
   an exact-cent additional-expense preview. This is not full safe-to-spend money.
 

@@ -38,6 +38,7 @@ def _confirm(
             record_id=record_id,
             account_id=request.account_id,
             already_in_balance=request.already_in_balance,
+            remember_account=request.remember_account,
             is_income=is_income,
         )
     except PlanningRecordNotFoundError as exc:
@@ -92,14 +93,22 @@ def create_income(
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[Session, Depends(get_database_session)],
 ) -> IncomeResponse:
-    income = PlanningService(session).create_income(
-        user_id=current_user.id,
-        description=request.description,
-        amount=request.amount,
-        currency=request.currency,
-        expected_date=request.expected_date,
-        recurrence=request.recurrence,
-    )
+    try:
+        income = PlanningService(session).create_income(
+            user_id=current_user.id,
+            description=request.description,
+            amount=request.amount,
+            currency=request.currency,
+            expected_date=request.expected_date,
+            recurrence=request.recurrence,
+            preferred_account_id=request.preferred_account_id,
+        )
+    except PlanningRecordNotFoundError as exc:
+        session.rollback()
+        raise HTTPException(404, "No encontramos una cuenta activa.") from exc
+    except ValueError as exc:
+        session.rollback()
+        raise HTTPException(422, str(exc)) from exc
     return IncomeResponse.model_validate(income)
 
 
@@ -109,14 +118,22 @@ def create_commitment(
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[Session, Depends(get_database_session)],
 ) -> CommitmentResponse:
-    commitment = PlanningService(session).create_commitment(
-        user_id=current_user.id,
-        description=request.description,
-        amount=request.amount,
-        currency=request.currency,
-        due_date=request.due_date,
-        recurrence=request.recurrence,
-    )
+    try:
+        commitment = PlanningService(session).create_commitment(
+            user_id=current_user.id,
+            description=request.description,
+            amount=request.amount,
+            currency=request.currency,
+            due_date=request.due_date,
+            recurrence=request.recurrence,
+            preferred_account_id=request.preferred_account_id,
+        )
+    except PlanningRecordNotFoundError as exc:
+        session.rollback()
+        raise HTTPException(404, "No encontramos una cuenta activa.") from exc
+    except ValueError as exc:
+        session.rollback()
+        raise HTTPException(422, str(exc)) from exc
     return CommitmentResponse.model_validate(commitment)
 
 

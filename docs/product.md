@@ -42,7 +42,7 @@ every user-owned resource is isolated from other users. Social login,
 multi-factor authentication, and the exact account-recovery flow are outside
 the initial requirement or **Pending decision**.
 
-Registration explains invalid email syntax, password-length and confirmation errors before submission. A duplicate email produces an explicit conflict message. The current navigation has Inicio, Mi plan and Perfil. Inicio explains the month with a limited cash-flow snapshot and an additional-expense preview; Mi dinero manages accounts outside the tab bar. Mi plan supports the M3 slice described below. Goals and Investments remain in the roadmap and are hidden from navigation until usable. No unavailable financial metric is shown as if it were implemented.
+Registration explains invalid email syntax, password-length and confirmation errors before submission. A duplicate email produces an explicit conflict message. The current navigation has Inicio, Movimientos and Perfil. Inicio explains the month with a limited cash-flow snapshot and an additional-expense preview; Mi dinero manages accounts outside the tab bar. Movimientos supports the M3 slice described below. Goals and Investments remain in the roadmap and are hidden from navigation until usable. No unavailable financial metric is shown as if it were implemented.
 
 ### Financial accounts
 
@@ -87,8 +87,9 @@ Explicit confirmation updates the selected account balance once, in the same
 currency, or records that the movement is already included without changing it.
 Scheduled
 recurring dates will request confirmation through configurable reminders;
-reaching the date alone does not change real money. Reminders and preferred
-accounts on recurring templates remain future work. The confirmation slice does
+reaching the date alone does not change real money. Preferred accounts are saved
+on creation and can be remembered across monthly confirmations. Reminders remain
+future work. The confirmation slice does
 not support partial amounts, backdated actual dates or undo/corrections.
 
 ### Goals and allocations
@@ -197,10 +198,18 @@ not the complete safe-to-spend calculation: budgets and goals are not silently
 assumed to be zero. The empty state presents a concrete two-step start instead
 of an unexplained financial zero. Navigation exposes only working areas.
 
-Mi plan separates payments and income, uses familiar presets (rent, services,
+Movimientos separates payments and income, uses familiar presets (rent, services,
 card, salary) and keeps advanced recurrence explanations in the form. Mi dinero
 uses everyday wording in place of liquidity jargon. No existing records are
 migrated or deleted by the redesign.
+
+The movements redesign separates a compact pending list from modal creation and
+confirmation sheets. Completed records are collapsed into a history disclosure
+for the current page. Creation selects an account once and derives currency from
+it; monthly occurrences inherit that preference. Existing monthly records can
+explicitly remember the account at confirmation. The primary action confirms
+receipt/payment and updates the saved account; already-included reconciliation
+is a secondary action. All mutations still require an explicit user action.
 
 Full available-money and goal effects remain the product destination. Before
 regular use beyond testing, stopping/editing repeats and confirmation corrections

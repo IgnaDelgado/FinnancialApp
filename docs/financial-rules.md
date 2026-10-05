@@ -154,7 +154,9 @@ combined. No account balances or snapshots change.
 
 Tu mes navigates past, current and future months, keeping its pages of 20 and
 older pending records. Its DD/MM/YYYY input is normalized to ISO at the API.
-Templates are immutable in this extension. Editing, stopping/cancelling repeats,
+Template amounts and calendars remain immutable. Preferred accounts can be
+updated explicitly as described in the saved-account slice below.
+Editing, stopping/cancelling repeats,
 partial-payment history and full availability calculations remain pending.
 Full received/paid transitions are delivered by the confirmation slice below.
 A manually retried POST after an ambiguous network failure can create another
@@ -252,8 +254,40 @@ Month consultation retains completed records in their planned month, but does no
 carry them as overdue pending records into later months. Confirmed income is no
 longer forecast; paid commitments are no longer deducted as pending. Monthly
 generation keeps completed occurrences and leaves later occurrences planned.
-The mobile flow chooses an account at confirmation; saving a preferred account
-on a recurring template and configurable notifications remain future work.
+The mobile flow uses the saved account at confirmation, with an option to change
+it. Configurable notifications remain future work.
+
+### Saved accounts and simpler movements flow (2026-10-05)
+
+Users can select a preferred active owned account when creating income or a
+commitment. It must use the movement's currency. For monthly creation, the
+template, first occurrence and subsequently generated occurrences retain that
+preference. This is configuration only: no balance, snapshot or status changes.
+Existing records remain valid without a preferred account; no account is inferred
+or assigned during migration. Preferred and actual confirmed accounts are distinct.
+
+When confirming a monthly occurrence, the user may explicitly select "Use this
+account every month" (`remember_account=true`). Confirmation then atomically
+updates the template and all its still-pending generated occurrences, including
+older pending occurrences, to that selected account. Previously completed
+occurrences and their actual account/history remain unchanged. Later generation
+inherits the template's current preference. This is the only supported template
+configuration change; amount, dates and recurrence edits remain outside this slice.
+
+An identical confirmation retry must use the same account, balance-reconciliation
+option and remember-account flag. A different flag conflicts without changing the
+template. Remembering is supported only for monthly occurrences. Lock ordering
+is template, pending occurrences, selected occurrence, account; ordinary
+confirmations still lock their occurrence then account. This serializes preference
+changes with monthly generation and prevents duplicate balance mutations.
+
+Archived preferred accounts may remain visible as historical configuration;
+the user must choose an active account for a new confirmation. Generation does
+not reactivate or replace an archived account. The mobile creation flow derives
+currency from the explicitly chosen account, without conversion. A saved account
+reduces selection steps, but reaching a date still never changes money or
+auto-confirms an expected income/payment. Full-amount and correction limitations
+from the preceding slice remain unchanged.
 
 ## Goals and Goal Progress
 

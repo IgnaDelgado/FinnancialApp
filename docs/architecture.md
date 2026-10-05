@@ -144,6 +144,16 @@ Registration validates email and password at the API boundary, while the mobile 
 
 ## Currency and Calculation Boundaries
 
+Saved account preferences are nullable foreign keys on monthly templates and
+their occurrences, distinct from actual confirmation account references.
+Creation validates ownership, archival and currency. Monthly insertion inherits
+the template preference; select-in loading supplies account names for the list
+without a query per record. Remembering an account acquires the template and
+pending-occurrence locks before the account lock and commits with confirmation.
+Completed occurrences are preserved. Retry identity includes the remember flag.
+Migration 0008 leaves older records unassigned. React Native modal sheets separate
+creation and confirmation from the pending list; no new dependency is required.
+
 ### Account-linked planning confirmation
 
 The confirmation service locks an owned planning occurrence and then its active
@@ -188,7 +198,9 @@ Material decisions should be recorded under `docs/decisions/` when they are made
 
 ## Monthly planning implementation
 
-`monthly_plans` owns immutable income/commitment templates. Instances retain a
+`monthly_plans` owns income/commitment templates whose amounts and calendar
+remain immutable; users can explicitly update the preferred account during
+confirmation. Instances retain a
 nullable template foreign key and recurrence period, constrained consistently
 with ONE_TIME/MONTHLY and unique per template/month. Services lock owned
 templates with SELECT FOR UPDATE and insert batches of at most 500 occurrences
@@ -216,5 +228,5 @@ current-money card, payment/income breakdown, separate forecast and a local
 expense preview using bigint cents. It discards obsolete reads on focus/auth
 changes. No preview request or financial mutation is sent to the backend.
 Navigation hides unfinished goal/investment routes while preserving their files.
-The three visible tabs are Inicio, Mi plan and Perfil. Safe-area-aware tab height
+The three visible tabs are Inicio, Movimientos and Perfil. Safe-area-aware tab height
 keeps labels visible. Existing account management remains directly accessible.
