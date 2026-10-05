@@ -166,12 +166,60 @@ The MVP supplies daily life, activities and entertainment, and unexpected-expens
 For a flexible budget in one currency:
 
 ```text
-remaining flexible budget =
-    planned flexible budget
-    - aggregate flexible spending registered for the month
+remaining flexible budget = max(
+    planned flexible budget - aggregate flexible spending registered for the month,
+    0
+)
+
+budget excess = max(
+    aggregate flexible spending registered for the month - planned flexible budget,
+    0
+)
 ```
 
-The remaining amount is deducted by `available_today`. Category aggregation, rollover, mid-month changes, correction history, and presentation when aggregate spending exceeds the planned budget are **Pending decision**.
+The remaining amount is deducted by `available_today`. Category aggregation,
+mid-month changes, correction history, and unused-budget rollover are
+**Pending decision**.
+
+### Budget excess and account-linked movements (approved 2026-10-05)
+
+This decision supersedes the unclamped remaining-budget formula. Excess belongs
+to the financial month in which the spending occurred. It is displayed separately
+and never makes the remaining budget negative. The next month's planned amount
+stays unchanged unless the user explicitly changes it; excess is not carried
+forward as a new expense, obligation, or automatic reduction of that plan.
+Other categories and goal allocations are not adjusted automatically.
+
+The intended budget interface shows category, monthly planned amount, spending,
+remaining amount, excess, and a default associated account. The user can select
+a different account for an actual expense. Recording a budget plan does not
+change an account balance. Detailed purchases remain optional.
+
+Confirmed income increases the selected account balance once. Confirmed payments
+and flexible expenses decrease the selected account balance once. An expense
+recorded under a budget also contributes to that month's spending once; the
+budget total is not a second account debit. Each movement and its associated
+account must belong to the same user and use the same currency. Merely reaching
+an expected date never changes a balance or confirms receipt/payment.
+
+Recurring movements have a scheduled financial date and configurable reminders
+to request confirmation. A reminder does not confirm a movement. Reminder timing,
+delivery channel, permissions and behavior while the application is closed remain
+**Pending decision**; notifications are not currently implemented.
+
+Synthetic example, excluding commitments and goals: opening ARS cash is
+500,000.00 and the planned budget is 100,000.00. Confirmed spending of 120,000.00
+leaves actual cash of 380,000.00, a remaining budget of 0.00, and an excess of
+20,000.00. The balance already reflects the full expense. Availability must not
+deduct that 120,000.00 again or add back 20,000.00 by subtracting a negative
+remaining budget. The next month's unchanged plan remains 100,000.00.
+
+These are approved requirements, not delivered functionality. Before implementing
+account-changing confirmation, resolve reconciliation when the recorded balance
+already includes the movement, confirmation retries/concurrency, actual versus
+planned amount/date, reversals/corrections, and partial-payment history. Combining
+aggregate spending entry with individual expenses must prevent double counting;
+its reconciliation policy and category aggregation remain **Pending decision**.
 
 ## Goals and Goal Progress
 

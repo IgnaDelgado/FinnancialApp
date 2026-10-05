@@ -111,7 +111,7 @@ Implement one-time and recurring income, commitments and installments, flexible-
 - Financial dates and month boundaries use `America/Argentina/Cordoba`; technical timestamps use UTC.
 - Expected income remains distinguishable from received income.
 - Users can create monthly flexible budgets and enter aggregate spending without recording every purchase.
-- Remaining flexible budget equals planned budget minus aggregate spending for the month.
+- Remaining flexible budget equals planned budget minus aggregate spending for the month, floored at zero. Excess is displayed separately in the month of spending and does not automatically change next month's planned amount or goal allocations.
 - The mobile app supports the required income, commitment, budget, and aggregate-spending entries.
 - Tests cover idempotent recurrence, partial remaining amounts, overdue records, cancellations, and financial month boundaries.
 
@@ -271,3 +271,18 @@ status transitions, reconciliation with recorded balances, and stopping/editing
 monthly plans. Then approve and implement flexible-budget and goal-allocation
 rules so the primary result can become the complete safe-to-spend value.
 Empty goals/investment tabs stay hidden until those capabilities are usable.
+
+### Account-linked confirmation and budgets (2026-10-05)
+
+Approved product direction: associate income/payments with accounts, request
+confirmation on recurring dates through configurable reminders, and update the
+selected account once on confirmation. Budget categories show planned spending,
+actual spending, remaining amounts, excess and default accounts. The approved
+excess rule is specified in financial-rules.md; this update delivers specification
+only, not account-changing confirmation, budgets or notifications.
+
+Deliver small, verified slices: first settle reconciliation with recorded
+balances and retry/correction semantics; then implement account-linked
+confirmation, budget planning and confirmed spending; finally implement reminders
+after their delivery/configuration requirements are settled. Resolve category
+aggregation and combined aggregate/individual spending before their calculation.

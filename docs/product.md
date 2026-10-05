@@ -68,7 +68,24 @@ Users record one-time or monthly income with an expected date and a status of `P
 
 Users also record commitments such as rent, services, subscriptions, credit-card payments, debt payments, and installments. Commitment statuses are `PLANNED`, `PARTIALLY_PAID`, `PAID`, and `CANCELLED`. Unpaid planned or partially paid amounts are deducted according to their remaining amount, including when overdue; paid and cancelled commitments are excluded. Monthly recurrence creates period instances idempotently.
 
-Instead of requiring every purchase, the MVP provides a flexible monthly budget. Its initial categories are daily life, activities and entertainment, and unexpected expenses. Users may add categories. Usage is entered as aggregate spending for the month rather than as individual purchases. Remaining flexible budget is the planned amount minus that aggregate spending.
+Instead of requiring every purchase, the MVP provides a flexible monthly budget.
+Its initial categories are daily life, activities and entertainment, and
+unexpected expenses. Users may add categories. Aggregate spending remains
+supported; individual expense entry is optional. The intended budget section
+shows monthly planned amounts, spending, remaining amounts, excess and default
+associated accounts, with account selection for each expense. Remaining budget
+is the planned amount minus spending, floored at zero. Excess stays in the month
+where it occurred and is shown explicitly; it does not automatically change other
+categories, goals or next month's planned amount. The user may explicitly adjust
+a future plan. These requirements were approved on 2026-10-05 and are not yet
+implemented; aggregation and reconciliation rules remain pending.
+
+Income and payments will be associated with accounts. Explicit confirmation
+will update the selected account balance once, in the same currency. Scheduled
+recurring dates will request confirmation through configurable reminders;
+reaching the date alone does not change real money. Confirmation and reminders
+are not currently delivered. Reconciliation with manually updated balances and
+notification delivery details must be resolved before implementation.
 
 ### Goals and allocations
 
