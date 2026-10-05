@@ -382,3 +382,68 @@ hypothetical and creates no financial record. It does not estimate goal effects.
 The snapshot materializes current monthly planning occurrences before summing
 all matching records, independently of list pagination. An empty setup is not
 presented as financial advice; the user is guided to add balances and major bills.
+
+Balances, pending commitments and expected income must be read from one database
+snapshot. A concurrent confirmation must never combine a pre-confirmation balance
+with post-confirmation status. The repository reads all three sources in one SQL
+statement; monthly income and commitment generation runs in one preceding transaction.
+
+## Planning maintenance (approved 2026-10-05)
+
+This decision supersedes the restrictions on monthly edits, stopping repetitions
+and confirmation corrections in the preceding delivery slices.
+
+Stopping a monthly plan takes an inclusive financial month. The template keeps
+that stop month; its PLANNED occurrences in that and later months become
+CANCELLED, and no further occurrences are generated there. Earlier pending
+occurrences and all completed occurrences remain unchanged. Repeating the same
+stop is idempotent; choosing a different month afterwards conflicts. Stopping
+does not move cash, restore a payment, or remove audit history. Restarting is not
+supported: the user creates a new plan.
+
+Editing a monthly amount/day takes a first financial date in a strictly future
+month. The date supplies the effective month and day anchor. Amounts follow the
+existing positive NUMERIC(20,2) rule; currency and ownership never change. Each
+edit appends a version with its effective month, amount, day and UTC timestamp.
+For a month, the latest version effective on or before that month supplies the
+amount/day, with missing days clamped to month end. Future PLANNED generated
+occurrences are updated accordingly; completed occurrences keep their original
+amount/date/account. Versions effective later remain applicable. Past and current
+occurrences remain unchanged. Edits on/after a stopped month are rejected.
+
+Correction explicitly reverses one identified confirmation timestamp, retaining
+an immutable audit event with the original amount, currency, account,
+reconciliation/remember flags, confirmation time and correction time. If the
+original confirmation applied money, the inverse amount is applied to the
+original active owned account's CURRENT balance and one new snapshot is appended.
+If it was already included, no balance or snapshot changes. No previous balance
+is restored, and unrelated later movements are preserved. Storage overflow and
+archived accounts for a cash adjustment are rejected atomically.
+
+After correction the occurrence is PLANNED again, ready for explicit new
+confirmation; if its template has already stopped for that month it is CANCELLED
+instead. The saved template account is not rolled back. An identical correction
+retry returns its existing audit event, even after a new confirmation; a stale
+confirmation timestamp conflicts. Original snapshots and correction events remain
+available in export. Record/account writes and template maintenance are serialized.
+Different actual amounts, partial payments and arbitrary one-time edits remain
+outside this slice.
+
+## User data portability and deletion (2026-10-05)
+
+Authenticated users can export a versioned JSON document containing their profile,
+active and archived accounts, complete balance snapshots, planned/completed/
+cancelled movements, monthly templates, edit versions and correction history.
+Export does not generate occurrences or change data. All components use one
+database snapshot, amounts remain decimal strings, and dates/timestamps retain
+their meaning. Password hashes, refresh tokens and authentication internals are
+never exported. Responses disable caching.
+
+Account deletion requires an authenticated user, their current password and an
+explicit UI confirmation. It permanently deletes that user's stored profile,
+sessions and financial records atomically, invalidating access and refresh tokens.
+Other users' data is untouched. The UI recommends export beforehand and clears
+local credentials after successful deletion. An ambiguous connection failure must
+not be reported as success. Backups, deployment log retention and operational
+erasure policy must be configured before public deployment; database deletion is
+not a claim that all independently managed backups have been erased.

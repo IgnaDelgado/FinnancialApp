@@ -81,13 +81,17 @@ class PlanningRepository:
         self._session.add(plan)
         self._session.flush()
 
-    def locked_monthly_plans(self, user_id: UUID, kind: str) -> list[MonthlyPlan]:
+    def locked_monthly_plans(
+        self, user_id: UUID, kind: str | None
+    ) -> list[MonthlyPlan]:
         statement = (
             select(MonthlyPlan)
-            .where(MonthlyPlan.user_id == user_id, MonthlyPlan.kind == kind)
+            .where(MonthlyPlan.user_id == user_id)
             .order_by(MonthlyPlan.id)
             .with_for_update()
         )
+        if kind is not None:
+            statement = statement.where(MonthlyPlan.kind == kind)
         return list(self._session.scalars(statement).all())
 
     def insert_occurrences(self, plan: MonthlyPlan, dates: Iterable[date]) -> None:

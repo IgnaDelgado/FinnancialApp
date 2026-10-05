@@ -18,8 +18,7 @@ class HomeService:
         today = financial_today()
         start, end = month_bounds(today.year, today.month)
         planning = PlanningService(self._session)
-        planning.ensure_monthly_records(user_id, "income", start, end)
-        planning.ensure_monthly_records(user_id, "commitments", start, end)
+        planning.ensure_monthly_records(user_id, None, start, end)
         account_values, bill_values, income_values = HomeRepository(
             self._session
         ).inputs(user_id, end)

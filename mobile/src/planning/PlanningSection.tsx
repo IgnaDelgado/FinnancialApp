@@ -91,6 +91,8 @@ export function PlanningSection({ kind, today, period }: { kind: PlanningKind; t
   }
 
   const income = kind === 'income';
+  const pendingRecords = records.filter((record) => record.status === 'PLANNED');
+  const completedRecords = records.filter((record) => record.status !== 'PLANNED');
   return <View style={styles.card}>
     <View style={styles.sectionHeading}>
       <Text accessibilityRole="header" style={styles.title}>{income ? 'Por cobrar' : 'Por pagar'}</Text>
@@ -112,8 +114,8 @@ export function PlanningSection({ kind, today, period }: { kind: PlanningKind; t
       <PrimaryButton label={income ? 'Guardar cobro' : 'Guardar pago'} loading={saving} onPress={() => { void save(); }} />
     </PlanningSheet>}
     {loading ? <ActivityIndicator accessibilityLabel="Cargando registros" color={colors.forest} /> : loadError ? <><NoticeBanner message={loadError} /><Pressable accessibilityRole="button" style={styles.button} onPress={() => reload()}><Text style={styles.buttonText}>Reintentar</Text></Pressable></> : <>
-    {records.every((record) => record.status !== 'PLANNED') && <View style={styles.empty}><Text style={styles.name}>{records.length ? 'Todo confirmado en esta página' : income ? 'Agregá tu sueldo o próximo cobro' : 'Agregá tu alquiler o gastos fijos'}</Text><Text style={styles.help}>{records.length ? 'Los movimientos confirmados están en el historial.' : 'Elegí una cuenta una vez y dejá preparado cada mes.'}</Text></View>}
-    {records.filter((record) => record.status === 'PLANNED').map((record) => <View key={record.id} style={styles.entry}>
+    {pendingRecords.length === 0 && <View style={styles.empty}><Text style={styles.name}>{records.length ? 'Todo confirmado en esta página' : income ? 'Agregá tu sueldo o próximo cobro' : 'Agregá tu alquiler o gastos fijos'}</Text><Text style={styles.help}>{records.length ? 'Los movimientos confirmados están en el historial.' : 'Elegí una cuenta una vez y dejá preparado cada mes.'}</Text></View>}
+    {pendingRecords.map((record) => <View key={record.id} style={styles.entry}>
       <View style={styles.entryHeader}><Text style={[styles.name, styles.flex]}>{record.description}</Text><Text style={styles.tag}>{record.recurrence === 'MONTHLY' ? 'Mensual' : 'Una vez'}</Text></View>
       <Text style={styles.amount}>{formatMoney(record.amount, record.currency)}</Text>
       <Text style={styles.help}>{record.preferred_account_name ?? 'Elegí la cuenta al confirmar'}</Text>
@@ -127,9 +129,9 @@ export function PlanningSection({ kind, today, period }: { kind: PlanningKind; t
         }} />
         : null)}
     </View>)}
-    {records.some((record) => record.status !== 'PLANNED') && <>
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded: history }} style={styles.historyToggle} onPress={() => setHistory(!history)}><Text style={styles.help}>{history ? 'Ocultar' : 'Ver'} confirmados en esta página ({records.filter((record) => record.status !== 'PLANNED').length}) {history ? '−' : '+'}</Text></Pressable>
-      {history && records.filter((record) => record.status !== 'PLANNED').map((record) => <View key={record.id} style={styles.historyEntry}><Text style={styles.name}>{record.description}</Text><Text style={styles.help}>{formatMoney(record.amount, record.currency)} · {income ? 'Cobrado' : 'Pagado'} · {displayFinancialDate(recordDate(record))}</Text></View>)}
+    {completedRecords.length > 0 && <>
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: history }} style={styles.historyToggle} onPress={() => setHistory(!history)}><Text style={styles.help}>{history ? 'Ocultar' : 'Ver'} confirmados en esta página ({completedRecords.length}) {history ? '−' : '+'}</Text></Pressable>
+      {history && completedRecords.map((record) => <View key={record.id} style={styles.historyEntry}><Text style={styles.name}>{record.description}</Text><Text style={styles.help}>{formatMoney(record.amount, record.currency)} · {income ? 'Cobrado' : 'Pagado'} · {displayFinancialDate(recordDate(record))}</Text></View>)}
     </>}
     </>}
     {(page > 0 || hasNext) && <><Text style={styles.help}>Página {page + 1}</Text><View style={styles.row}>

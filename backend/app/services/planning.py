@@ -131,7 +131,7 @@ class PlanningService:
         return plan
 
     def ensure_monthly_records(
-        self, user_id: UUID, kind: str, start: date, end: date
+        self, user_id: UUID, kind: str | None, start: date, end: date
     ) -> None:
         current_period = financial_today().replace(day=1)
         for plan in self._records.locked_monthly_plans(user_id, kind):
