@@ -7,8 +7,9 @@ import { ApiError } from '@/auth/api';
 import { useAuth } from '@/auth/AuthProvider';
 import { NoticeBanner } from '@/components/NoticeBanner';
 import { colors, fontFamily } from '@/theme';
+import { DataControls } from '@/profile/DataControls';
 
-type Action = 'refresh' | 'logout' | 'logout-all' | null;
+type Action = 'refresh' | 'logout' | 'logout-all' | 'data' | null;
 
 export default function ProfileScreen() {
   const { refreshProfile, session, signOut, signOutAll } = useAuth();
@@ -57,6 +58,7 @@ export default function ProfileScreen() {
         </View>
 
         {error ? <NoticeBanner message={error} /> : null}
+        <DataControls disabled={action !== null} onBusyChange={(busy) => setAction(busy ? 'data' : null)} />
 
         <Pressable
           accessibilityRole="button"

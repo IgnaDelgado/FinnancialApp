@@ -194,13 +194,35 @@ No provider or protocol is selected. An integration requires legal, commercial, 
 
 ## Architecture Decisions Still Pending
 
+### Planning maintenance and user data
+
+Migration 0009 adds monthly change versions, a stop month and immutable
+confirmation correction events. Maintenance locks template then occurrence then
+account; ordinary confirmation keeps occurrence then account. Corrections keep
+the original confirmation timestamp as their retry identity, so a stale retry
+cannot undo a newer confirmation. Existing account snapshots are never rewritten.
+Amounts/dates on completed records remain unchanged when a version is added.
+
+Export uses a single PostgreSQL JSON-producing UNION ALL statement across owned
+records. NUMERIC fields are cast to text before JSON encoding; authentication
+secrets are explicitly excluded. DELETE verifies the current Argon2 password,
+then PostgreSQL cascades the root user deletion atomically. HTTP responses use
+no-store. Operational backup/log retention is a deployment requirement.
+
+The mobile export uses SDK-compatible expo-file-system and expo-sharing to create
+and share a JSON file on native platforms, removing the temporary file afterwards.
+Web uses a local Blob download and revokes its URL. No financial export is
+uploaded to an external service by the app. Native sharing and deletion require
+device acceptance testing before release.
+
 Material decisions should be recorded under `docs/decisions/` when they are made. Authentication and mobile session handling are defined in ADRs 0002 and 0003. Remaining topics include package boundaries, API conventions beyond authentication, detailed persistence behavior, deployment, observability, backup, retention, and integration providers.
 
 ## Monthly planning implementation
 
-`monthly_plans` owns income/commitment templates whose amounts and calendar
-remain immutable; users can explicitly update the preferred account during
-confirmation. Instances retain a
+`monthly_plans` keeps the original income/commitment amount and calendar.
+`monthly_plan_changes` appends effective-month amount/day versions; confirmed
+occurrences remain immutable. Users can explicitly update the preferred account
+during confirmation, and stopped_from bounds generation. Instances retain a
 nullable template foreign key and recurrence period, constrained consistently
 with ONE_TIME/MONTHLY and unique per template/month. Services lock owned
 templates with SELECT FOR UPDATE and insert batches of at most 500 occurrences
@@ -216,6 +238,13 @@ an actionable backend-update message. Additive migrations preserve one-time
 records. Downgrade refuses to remove monthly tables when templates exist.
 
 ## Home snapshot and expense preview
+
+The input repository uses one UNION ALL statement so balances and movement
+statuses share one PostgreSQL MVCC snapshot, including concurrent confirmations.
+Generation checks only templates whose checkpoint precedes the requested/current
+month; it avoids locking/reinserting already elapsed periods. Stopped templates
+stop iteration at the inclusive stop month. The domain still calculates Decimal
+results from exact per-currency inputs; no exchange or formula changes are added.
 
 GET /api/v1/home uses authenticated ownership and the current Argentina financial
 date. HomeService materializes current monthly planning records; HomeRepository

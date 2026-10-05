@@ -87,3 +87,15 @@ npx expo-doctor
 - `src/planning/`: one-time/monthly planning API, validation, and forms/lists.
 
 The detailed learning guide is in `docs/mobile-authentication-course.md`.
+
+Movimientos supports versioned future monthly amount/day changes, stopping repeats
+from an inclusive month, and correcting confirmations from the page history.
+Corrections explicitly adjust current cash rather than restoring a previous
+balance. Cancelled records are labelled separately from paid/received records.
+
+Profile exports the complete owned history as JSON and supports password-confirmed
+permanent account deletion. Native export uses `expo-file-system` and
+`expo-sharing`, installed with Expo's SDK-compatible installer; web downloads a
+Blob. Reinstall locked dependencies after pulling these changes (`npm ci`).
+Test the native share sheet, cancellation and temporary-file cleanup on a device.
+Dependency audit limitations are recorded in `docs/release-review.md`.

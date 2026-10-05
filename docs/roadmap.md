@@ -97,8 +97,7 @@ The current financial month and all older pending records remain accessible
 without changing account balances or history. There are no available-money,
 savings, or full availability calculations. Full account-linked received/paid
 confirmation is now delivered, with explicit reconciliation and retry protection.
-M3 remains incomplete: cancellations, corrections,
-editing/rescheduling/deletion, stopping repetitions, installments, partial payments,
+M3 remains incomplete: one-time cancellation/editing, installments, partial payments,
 flexible budgets, and aggregate spending are not delivered. Remaining M2 work
 does not block this independent planning slice and is unchanged.
 
@@ -269,8 +268,8 @@ No provider, API, or integration is selected or available yet. WhatsApp is the f
 
 The new home snapshot and expense preview provide an understandable entry into
 planning, without claiming that M5 or M7 is complete. Full received/paid
-confirmation and explicit reconciliation are now delivered. Next: stopping/editing
-monthly plans and confirmation corrections. Then approve and implement flexible-budget and goal-allocation
+confirmation and explicit reconciliation are now delivered. Monthly stopping, future amount/day editing and auditable confirmation corrections
+are delivered. Next approve and implement flexible-budget and goal-allocation
 rules so the primary result can become the complete safe-to-spend value.
 Empty goals/investment tabs stay hidden until those capabilities are usable.
 
@@ -290,9 +289,10 @@ inherits it, and explicit monthly confirmation can remember it for pending and
 future occurrences. Movimientos replaces the former Mi plan label, separates
 modal forms from the list, and collapses completed records into paged history.
 This still requires explicit receipt/payment confirmation. Automatic reminders,
-budget spending, corrections and other monthly-template edits remain future work.
+budget spending and broader one-time edits remain future work. Monthly maintenance
+and full confirmation corrections are delivered.
 
-Next small slices: settle correction semantics, category aggregation and combined
+Next small slices: settle category aggregation and combined
 spending reconciliation; implement budget planning and confirmed spending;
 finally implement reminders
 after their delivery/configuration requirements are settled. Resolve category

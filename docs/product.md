@@ -62,9 +62,9 @@ labels and independent pagination. Creation does not change accounts or their
 history. Monthly plans start on the chosen first date and use the last day of
 a month when the original day does not exist. Full received/paid confirmation
 now selects an account and either updates its balance or marks the movement as
-already included. Identical retries do not apply it twice. Modifications,
-stopping repetitions, installments,
-and flexible budgets remain future work. M2 and M3 are still partial.
+already included. Identical retries do not apply it twice. Monthly amount/day edits for future
+months, stopping repetitions, and auditable confirmation corrections are now
+delivered. Installments and flexible budgets remain future work. M2 and M3 are still partial.
 
 Users record one-time or monthly income with an expected date and a status of `PLANNED`, `RECEIVED`, or `CANCELLED`. Only `PLANNED` income dated from today through month end qualifies for the month-end forecast. Overdue planned income is excluded and generates a warning. Expected income is never treated as received money.
 
@@ -90,7 +90,8 @@ recurring dates will request confirmation through configurable reminders;
 reaching the date alone does not change real money. Preferred accounts are saved
 on creation and can be remembered across monthly confirmations. Reminders remain
 future work. The confirmation slice does
-not support partial amounts, backdated actual dates or undo/corrections.
+not support partial amounts or backdated actual dates. Auditable corrections
+reverse a selected confirmation against current cash, then permit reconfirmation.
 
 ### Goals and allocations
 
@@ -211,7 +212,8 @@ explicitly remember the account at confirmation. The primary action confirms
 receipt/payment and updates the saved account; already-included reconciliation
 is a secondary action. All mutations still require an explicit user action.
 
-Full available-money and goal effects remain the product destination. Before
-regular use beyond testing, stopping/editing repeats and confirmation corrections
-remain to be completed. Full confirmation now removes received/paid occurrences
+Full available-money and goal effects remain the product destination. Monthly amount/day edits for future months, stopping repetitions and auditable
+confirmation corrections are delivered. Profile includes complete JSON export
+and password-confirmed account/data deletion. Public launch still requires
+the operational and security readiness checks in the roadmap. Full confirmation now removes received/paid occurrences
 from pending calculations without duplicating recorded cash.

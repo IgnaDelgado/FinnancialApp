@@ -39,9 +39,11 @@ accepted. These records do not change accounts or calculate available money.
 Full income/payment confirmation now selects an account and either updates its
 cash balance once or records that the movement is already included. Confirmed
 income and paid commitments leave pending calculations; identical retries do not
-duplicate balance/history changes. M3 remains partial: cancellations, corrections,
-modifications, stopping repetitions, installments,
-and budgets remain future work, as do M4–M9. The
+duplicate balance/history changes. M3 remains partial: monthly repetitions can now be stopped, future amount/day
+changes are versioned, and confirmations can be corrected with an auditable
+inverse adjustment. Partial payments, one-time edits/cancellations, installments
+and budgets remain future work, as do M4–M9. Profile supports complete JSON
+export and password-confirmed account/data deletion. The
 remaining M2 tasks and milestone order are tracked in
 [the roadmap](docs/roadmap.md). Email verification, password recovery, abuse
 protection, account security controls, and user-controlled data export/deletion
