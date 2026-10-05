@@ -1,5 +1,6 @@
 from collections.abc import Iterable
 from datetime import date
+from decimal import Decimal
 from typing import cast
 from uuid import UUID, uuid4
 
@@ -7,7 +8,9 @@ from sqlalchemy import false, or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from app.domain.planning import monthly_terms
 from app.models.planning import MonthlyPlan, PlannedCommitment, PlannedIncome
+from app.models.planning_maintenance import MonthlyPlanChange
 
 
 class PlanningRepository:
@@ -82,11 +85,18 @@ class PlanningRepository:
         self._session.flush()
 
     def locked_monthly_plans(
-        self, user_id: UUID, kind: str | None
+        self, user_id: UUID, kind: str | None, through: date
     ) -> list[MonthlyPlan]:
         statement = (
             select(MonthlyPlan)
             .where(MonthlyPlan.user_id == user_id)
+            .where(MonthlyPlan.generated_through < through)
+            .where(
+                or_(
+                    MonthlyPlan.stopped_from.is_(None),
+                    MonthlyPlan.generated_through < MonthlyPlan.stopped_from,
+                )
+            )
             .order_by(MonthlyPlan.id)
             .with_for_update()
         )
@@ -98,13 +108,22 @@ class PlanningRepository:
         table = PlannedIncome if plan.kind == "income" else PlannedCommitment
         date_field = "expected_date" if plan.kind == "income" else "due_date"
         batch: list[dict[str, object]] = []
+        changes = self.monthly_changes(plan.id)
         for occurrence in dates:
+            if (
+                plan.stopped_from is not None
+                and occurrence.replace(day=1) >= plan.stopped_from
+            ):
+                break
+            occurrence, amount = monthly_terms(
+                occurrence, plan.first_date.day, plan.amount, changes
+            )
             batch.append(
                 {
                     "id": uuid4(),
                     "user_id": plan.user_id,
                     "description": plan.description,
-                    "amount": plan.amount,
+                    "amount": amount,
                     "currency": plan.currency,
                     "preferred_account_id": plan.preferred_account_id,
                     date_field: occurrence,
@@ -114,6 +133,7 @@ class PlanningRepository:
                     "recurrence_period": occurrence.replace(day=1),
                 }
             )
+
             if len(batch) == 500:
                 self._session.execute(
                     insert(table)
@@ -131,6 +151,21 @@ class PlanningRepository:
                     index_elements=["template_id", "recurrence_period"]
                 )
             )
+
+    def monthly_changes(self, template_id: UUID) -> list[tuple[date, Decimal, int]]:
+        return list(
+            self._session.execute(
+                select(
+                    MonthlyPlanChange.effective_period,
+                    MonthlyPlanChange.amount,
+                    MonthlyPlanChange.day,
+                )
+                .where(MonthlyPlanChange.template_id == template_id)
+                .order_by(MonthlyPlanChange.effective_period, MonthlyPlanChange.id)
+            )
+            .tuples()
+            .all()
+        )
 
     def list_income(
         self,

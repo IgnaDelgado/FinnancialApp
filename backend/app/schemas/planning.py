@@ -79,12 +79,12 @@ class PlannedResponse(BaseModel):
 
 
 class IncomeResponse(PlannedResponse):
-    status: Literal["PLANNED", "RECEIVED"]
+    status: Literal["PLANNED", "RECEIVED", "CANCELLED"]
     expected_date: date
 
 
 class CommitmentResponse(PlannedResponse):
-    status: Literal["PLANNED", "PAID"]
+    status: Literal["PLANNED", "PAID", "CANCELLED"]
     due_date: date
 
 

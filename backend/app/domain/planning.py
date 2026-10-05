@@ -1,5 +1,5 @@
 from calendar import monthrange
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from datetime import date, datetime
 from decimal import Decimal
 from zoneinfo import ZoneInfo
@@ -43,3 +43,20 @@ def monthly_dates(first_date: date, start: date, end: date) -> Iterator[date]:
         if period.year == 9999 and period.month == 12:
             break
         period = date(period.year + (period.month == 12), period.month % 12 + 1, 1)
+
+
+def monthly_terms(
+    period: date,
+    original_day: int,
+    original_amount: Decimal,
+    changes: Iterable[tuple[date, Decimal, int]],
+) -> tuple[date, Decimal]:
+    """Apply ordered effective versions, preserving the requested day anchor."""
+    day, amount = original_day, original_amount
+    for effective_period, changed_amount, changed_day in changes:
+        if effective_period > period.replace(day=1):
+            break
+        day, amount = changed_day, changed_amount
+    return period.replace(
+        day=min(day, monthrange(period.year, period.month)[1])
+    ), amount

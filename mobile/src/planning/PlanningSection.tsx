@@ -13,6 +13,7 @@ import { colors, fontFamily } from '@/theme';
 import { ConfirmationForm } from './ConfirmationForm';
 import { AccountSelector } from './AccountSelector';
 import { PlanningSheet } from './PlanningSheet';
+import { MaintenanceForm, type MaintenanceAction } from './MaintenanceForm';
 import { createPlanningRecord, listPlanningRecords, type PlanningKind, type PlanningRecord } from './api';
 import { displayFinancialDate, recordDate, validatePlanningInput } from './validation';
 
@@ -37,6 +38,7 @@ export function PlanningSection({ kind, today, period }: { kind: PlanningKind; t
   const [formError, setFormError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
+  const [maintenance, setMaintenance] = useState<{ action: MaintenanceAction; record: PlanningRecord } | null>(null);
   const submitting = useRef(false);
   const mounted = useRef(true);
   const requestVersion = useRef(0);
@@ -100,6 +102,7 @@ export function PlanningSection({ kind, today, period }: { kind: PlanningKind; t
         <Text style={styles.addText}>{income ? '+ Nuevo cobro' : '+ Nuevo pago'}</Text>
       </Pressable>
     </View>
+    {maintenance && <MaintenanceForm key={`${maintenance.action}-${maintenance.record.id}`} action={maintenance.action} record={maintenance.record} kind={kind} today={today} period={period} onClose={() => setMaintenance(null)} onComplete={(notice) => { setMaintenance(null); setMessage(notice); reload(); }} />}
     {message && <Text accessibilityRole="alert" style={styles.help}>{message}</Text>}
     {editor && <PlanningSheet title={income ? 'Nuevo cobro' : 'Nuevo pago'} onClose={() => setEditor(false)} busy={saving}>
       <View style={styles.row}>{(income ? ['Sueldo', 'Trabajo', 'Otro'] : ['Alquiler', 'Servicios', 'Tarjeta']).map((label) => <Pressable key={label} accessibilityRole="button" disabled={saving} style={[styles.button, styles.flex]} onPress={() => { setDescription(label); setRecurrence(label === 'Trabajo' || label === 'Otro' ? 'ONE_TIME' : 'MONTHLY'); }}><Text style={styles.buttonText}>{label}</Text></Pressable>)}</View>
@@ -114,13 +117,14 @@ export function PlanningSection({ kind, today, period }: { kind: PlanningKind; t
       <PrimaryButton label={income ? 'Guardar cobro' : 'Guardar pago'} loading={saving} onPress={() => { void save(); }} />
     </PlanningSheet>}
     {loading ? <ActivityIndicator accessibilityLabel="Cargando registros" color={colors.forest} /> : loadError ? <><NoticeBanner message={loadError} /><Pressable accessibilityRole="button" style={styles.button} onPress={() => reload()}><Text style={styles.buttonText}>Reintentar</Text></Pressable></> : <>
-    {pendingRecords.length === 0 && <View style={styles.empty}><Text style={styles.name}>{records.length ? 'Todo confirmado en esta página' : income ? 'Agregá tu sueldo o próximo cobro' : 'Agregá tu alquiler o gastos fijos'}</Text><Text style={styles.help}>{records.length ? 'Los movimientos confirmados están en el historial.' : 'Elegí una cuenta una vez y dejá preparado cada mes.'}</Text></View>}
+    {pendingRecords.length === 0 && <View style={styles.empty}><Text style={styles.name}>{records.length ? 'Sin pendientes en esta página' : income ? 'Agregá tu sueldo o próximo cobro' : 'Agregá tu alquiler o gastos fijos'}</Text><Text style={styles.help}>{records.length ? 'Los movimientos confirmados y cancelados están en el historial.' : 'Elegí una cuenta una vez y dejá preparado cada mes.'}</Text></View>}
     {pendingRecords.map((record) => <View key={record.id} style={styles.entry}>
       <View style={styles.entryHeader}><Text style={[styles.name, styles.flex]}>{record.description}</Text><Text style={styles.tag}>{record.recurrence === 'MONTHLY' ? 'Mensual' : 'Una vez'}</Text></View>
       <Text style={styles.amount}>{formatMoney(record.amount, record.currency)}</Text>
       <Text style={styles.help}>{record.preferred_account_name ?? 'Elegí la cuenta al confirmar'}</Text>
       <View style={styles.entryHeader}><Text style={recordDate(record) < today ? styles.overdue : styles.help}>{displayFinancialDate(recordDate(record))}{recordDate(record) < today ? ' · Pendiente' : recordDate(record) === today ? ' · Hoy' : ''}</Text>
       <Pressable accessibilityRole="button" accessibilityLabel={`${income ? 'Cobré' : 'Pagué'} ${record.description}`} style={styles.confirmButton} onPress={() => { setConfirming(record.id); setMessage(null); }}><Text style={styles.confirmText}>{income ? 'Cobré' : 'Pagué'} →</Text></Pressable></View>
+      {record.template_id && <View style={styles.row}><Pressable accessibilityRole="button" style={[styles.button, styles.flex]} onPress={() => setMaintenance({ action: 'edit', record })}><Text style={styles.buttonText}>Cambiar desde otro mes</Text></Pressable><Pressable accessibilityRole="button" style={[styles.button, styles.flex]} onPress={() => setMaintenance({ action: 'stop', record })}><Text style={styles.buttonText}>Detener repetición</Text></Pressable></View>}
       {(confirming === record.id
         ? <ConfirmationForm key={`${ownerId}-${record.id}`} record={record} kind={kind} onCancel={() => setConfirming(null)} onComplete={(confirmed) => {
           setConfirming(null);
@@ -130,8 +134,13 @@ export function PlanningSection({ kind, today, period }: { kind: PlanningKind; t
         : null)}
     </View>)}
     {completedRecords.length > 0 && <>
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded: history }} style={styles.historyToggle} onPress={() => setHistory(!history)}><Text style={styles.help}>{history ? 'Ocultar' : 'Ver'} confirmados en esta página ({completedRecords.length}) {history ? '−' : '+'}</Text></Pressable>
-      {history && completedRecords.map((record) => <View key={record.id} style={styles.historyEntry}><Text style={styles.name}>{record.description}</Text><Text style={styles.help}>{formatMoney(record.amount, record.currency)} · {income ? 'Cobrado' : 'Pagado'} · {displayFinancialDate(recordDate(record))}</Text></View>)}
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: history }} style={styles.historyToggle} onPress={() => setHistory(!history)}><Text style={styles.help}>{history ? 'Ocultar' : 'Ver'} historial de esta página ({completedRecords.length}) {history ? '−' : '+'}</Text></Pressable>
+      {history && completedRecords.map((record) => <View key={record.id} style={styles.historyEntry}>
+        <Text style={styles.name}>{record.description}</Text>
+        <Text style={styles.help}>{formatMoney(record.amount, record.currency)} · {record.status === 'CANCELLED' ? 'Cancelado' : income ? 'Cobrado' : 'Pagado'} · {displayFinancialDate(recordDate(record))}</Text>
+        {record.confirmed_at && <Pressable accessibilityRole="button" style={styles.button} onPress={() => setMaintenance({ action: 'correct', record })}><Text style={styles.buttonText}>Corregir confirmación</Text></Pressable>}
+        {record.template_id && record.status !== 'CANCELLED' && <View style={styles.row}><Pressable accessibilityRole="button" style={[styles.button, styles.flex]} onPress={() => setMaintenance({ action: 'edit', record })}><Text style={styles.buttonText}>Cambiar repetición</Text></Pressable><Pressable accessibilityRole="button" style={[styles.button, styles.flex]} onPress={() => setMaintenance({ action: 'stop', record })}><Text style={styles.buttonText}>Detener repetición</Text></Pressable></View>}
+      </View>)}
     </>}
     </>}
     {(page > 0 || hasNext) && <><Text style={styles.help}>Página {page + 1}</Text><View style={styles.row}>

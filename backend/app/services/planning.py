@@ -134,7 +134,10 @@ class PlanningService:
         self, user_id: UUID, kind: str | None, start: date, end: date
     ) -> None:
         current_period = financial_today().replace(day=1)
-        for plan in self._records.locked_monthly_plans(user_id, kind):
+        requested_period = start.replace(day=1)
+        for plan in self._records.locked_monthly_plans(
+            user_id, kind, max(current_period, requested_period)
+        ):
             if plan.generated_through < current_period:
                 # Reinsert the checkpoint month safely, then fill every skipped
                 # month so pending obligations never disappear after inactivity.
@@ -146,9 +149,10 @@ class PlanningService:
                 plan.generated_through = current_period
             # A future-month consultation materializes just that month, rather
             # than filling all intervening future months or advancing the checkpoint.
-            self._records.insert_occurrences(
-                plan, monthly_dates(plan.first_date, start, end)
-            )
+            if requested_period > plan.generated_through:
+                self._records.insert_occurrences(
+                    plan, monthly_dates(plan.first_date, start, end)
+                )
         self._session.commit()
 
     def create_income(

@@ -56,7 +56,7 @@ export function ConfirmationForm({ record, kind, onComplete, onCancel }: {
     <View style={styles.summary}><Text style={styles.name}>{record.description}</Text><Text style={styles.amount}>{formatMoney(record.amount, record.currency)}</Text></View>
     {loading ? <ActivityIndicator color={colors.forest} accessibilityLabel="Cargando cuenta" /> : <AccountSelector value={account} currency={record.currency} disabled={saving} onChange={(next) => { setAccount(next); setError(null); }} />}
     {record.recurrence === 'MONTHLY' && account?.id !== record.preferred_account_id && <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: remember }} disabled={saving} style={styles.remember} onPress={() => setRemember(!remember)}><Text style={styles.help}>{remember ? '☑' : '☐'} Usar esta cuenta todos los meses</Text></Pressable>}
-    <Text style={styles.help}>{income ? 'Se sumará este importe a la cuenta.' : 'Se restará este importe de la cuenta.'} La confirmación no se puede deshacer todavía.</Text>
+    <Text style={styles.help}>{income ? 'Se sumará este importe a la cuenta.' : 'Se restará este importe de la cuenta.'} Podés corregir una confirmación desde el historial de Movimientos.</Text>
     {error && <NoticeBanner message={error} />}
     <PrimaryButton label={income ? 'Cobré · actualizar saldo' : 'Pagué · actualizar saldo'} loading={saving} disabled={loading || !account} onPress={() => { void confirm(false); }} />
     <Pressable accessibilityRole="button" disabled={saving || loading || !account} style={styles.secondary} onPress={() => { void confirm(true); }}><Text style={styles.secondaryText}>Ya estaba incluido en el saldo</Text></Pressable>

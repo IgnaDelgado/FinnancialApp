@@ -54,6 +54,7 @@ class MonthlyPlan(Base):
         ForeignKey("financial_accounts.id")
     )
     generated_through: Mapped[date] = mapped_column(Date)
+    stopped_from: Mapped[date | None] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -67,10 +68,12 @@ class PlannedIncome(Base):
             "length(trim(description)) > 0", name="ck_planned_income_description"
         ),
         CheckConstraint(
-            "status IN ('PLANNED', 'RECEIVED')", name="ck_planned_income_status"
+            "status IN ('PLANNED', 'RECEIVED', 'CANCELLED')",
+            name="ck_planned_income_status",
         ),
         CheckConstraint(
-            "(status = 'PLANNED' AND account_id IS NULL AND confirmed_at IS NULL "
+            "(status IN ('PLANNED', 'CANCELLED') AND account_id IS NULL "
+            "AND confirmed_at IS NULL "
             "AND already_in_balance IS NULL) OR (status = 'RECEIVED' "
             "AND account_id IS NOT NULL AND confirmed_at IS NOT NULL "
             "AND already_in_balance IS NOT NULL)",
@@ -119,7 +122,7 @@ class PlannedIncome(Base):
     remember_account: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
     )
-    status: Mapped[str] = mapped_column(String(8), default="PLANNED")
+    status: Mapped[str] = mapped_column(String(9), default="PLANNED")
     account_id: Mapped[UUID | None] = mapped_column(ForeignKey("financial_accounts.id"))
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     already_in_balance: Mapped[bool | None] = mapped_column(Boolean)
@@ -141,10 +144,12 @@ class PlannedCommitment(Base):
             "length(trim(description)) > 0", name="ck_planned_commitments_description"
         ),
         CheckConstraint(
-            "status IN ('PLANNED', 'PAID')", name="ck_planned_commitments_status"
+            "status IN ('PLANNED', 'PAID', 'CANCELLED')",
+            name="ck_planned_commitments_status",
         ),
         CheckConstraint(
-            "(status = 'PLANNED' AND account_id IS NULL AND confirmed_at IS NULL "
+            "(status IN ('PLANNED', 'CANCELLED') AND account_id IS NULL "
+            "AND confirmed_at IS NULL "
             "AND already_in_balance IS NULL) OR (status = 'PAID' "
             "AND account_id IS NOT NULL AND confirmed_at IS NOT NULL "
             "AND already_in_balance IS NOT NULL)",
@@ -196,7 +201,7 @@ class PlannedCommitment(Base):
     remember_account: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
     )
-    status: Mapped[str] = mapped_column(String(7), default="PLANNED")
+    status: Mapped[str] = mapped_column(String(9), default="PLANNED")
     account_id: Mapped[UUID | None] = mapped_column(ForeignKey("financial_accounts.id"))
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     already_in_balance: Mapped[bool | None] = mapped_column(Boolean)
