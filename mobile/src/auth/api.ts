@@ -87,6 +87,15 @@ async function readResponseBody(response: Response): Promise<unknown> {
 }
 
 function errorMessageFor(status: number, body: unknown, path: string): string {
+  if ((path.startsWith('/api/v1/income') || path.startsWith('/api/v1/commitments')) && status === 404 && readDetail(body) && readDetail(body) !== 'Not Found') {
+    return readDetail(body)!;
+  }
+  if (path.endsWith('/confirm') && (status === 404 || status === 409 || status === 422)) {
+    return readDetail(body) ?? 'Revisá la cuenta y la opción de confirmación.';
+  }
+  if (status === 404 && (path.startsWith('/api/v1/home') || path.startsWith('/api/v1/income') || path.startsWith('/api/v1/commitments'))) {
+    return 'El servidor no tiene habilitada esta función. Actualizá el backend y volvé a intentar.';
+  }
   if (status === 401) return 'El correo, la contraseña o la sesión no son válidos.';
   if (status === 409 && path === '/api/v1/auth/register') {
     return 'Ya existe una cuenta con ese correo. Iniciá sesión o usá otro correo.';
@@ -101,7 +110,7 @@ function validationMessage(body: unknown, path: string): string {
     return 'Revisa los datos ingresados.';
   }
   const detail = body.detail;
-  if (!Array.isArray(detail)) return 'Revisa los datos ingresados.';
+  if (!Array.isArray(detail)) return typeof detail === 'string' ? detail : 'Revisa los datos ingresados.';
   const fieldHasError = (field: string) => detail.some((entry) =>
     typeof entry === 'object' && entry !== null && 'loc' in entry &&
     Array.isArray(entry.loc) && entry.loc.includes(field),

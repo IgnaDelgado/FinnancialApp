@@ -19,9 +19,9 @@ The first M2 slice is implemented: users can create supported manual accounts,
 record signed ARS/USD balances (including overdrafts), update the full balance,
 and see per-currency totals. Each balance change creates a historical snapshot.
 The API enforces ownership, supports account archival, and paginates active
-accounts and balance history. The mobile home previews five accounts; account
+accounts and balance history. The account
 management displays pages of 50. Totals include every active account, not just
-the visible page, and are not net worth or safe-to-spend money. Month, Goals,
+the visible page, and are not net worth or safe-to-spend money. Goals
 and Investments remain clearly marked as coming soon.
 
 Mobile account balance history is now available when selecting an account,
@@ -30,12 +30,23 @@ and retry controls. Snapshots are complete balances, not transactions.
 The selected account offers confirmed removal through archival: it disappears
 from active accounts and totals while its records are retained.
 M2 is not yet complete: account-metadata editing and a dedicated archived-account
-management view remain. M3–M9 (income,
-commitments, budgets, goals, explained availability, investments, net worth,
-simulations, monthly close, and release readiness) are future work. The
+management view remain. The first part of M3 adds creation and paginated
+consultation of one-time and monthly planned income and commitments in Tu mes.
+Users select a month and a first date for monthly repetitions. It displays
+the selected financial month and older pending records separately by resource.
+Amounts are positive ARS/USD decimals; past and future calendar dates are
+accepted. These records do not change accounts or calculate available money.
+Full income/payment confirmation now selects an account and either updates its
+cash balance once or records that the movement is already included. Confirmed
+income and paid commitments leave pending calculations; identical retries do not
+duplicate balance/history changes. M3 remains partial: monthly repetitions can now be stopped, future amount/day
+changes are versioned, and confirmations can be corrected with an auditable
+inverse adjustment. Partial payments, one-time edits/cancellations, installments
+and budgets remain future work, as do M4–M9. Profile supports complete JSON
+export and password-confirmed account/data deletion. The
 remaining M2 tasks and milestone order are tracked in
 [the roadmap](docs/roadmap.md). Email verification, password recovery, abuse
-protection, account security controls, and user-controlled data export/deletion
+protection, account security controls, and operational deletion-retention policies
 are tracked separately in the
 [pre-beta checklist](docs/roadmap.md#pre-beta-authentication-and-account-checklist).
 
@@ -196,3 +207,34 @@ does not update the password stored in an existing volume. Preserve volumes
 that contain data and change the database role password explicitly. During
 initial setup only, an empty local volume can be recreated with
 `docker compose down -v`; this command permanently deletes that volume's data.
+
+### Mobile planning returns 404
+
+Rebuild the backend used by the phone after backend code changes:
+
+```powershell
+docker compose up --build -d --no-deps --wait backend
+```
+
+The backend now applies database migrations before startup. Keep the database
+volume. Check `/openapi.json` on the host/port configured by
+`EXPO_PUBLIC_API_URL`: it must include `/api/v1/income` and
+`/api/v1/commitments`. Reload Expo Go after updating. A host test server on
+another port does not update the Docker server used by the phone.
+
+### Start with a useful month view
+
+Inicio now shows current liquid cash minus registered pending bills through month
+end, with a separate expected-income forecast and an additional-expense preview.
+The first-use flow asks for cash balances and major bills; daily purchase logging
+is optional. Movimientos separates payments and income. Only usable areas appear in
+the tab bar. This limited snapshot is not safe-to-spend money: daily budgets,
+goal reserves still require the remaining MVP work. Movimientos now lets users mark
+full income as received and full commitments as paid, with explicit account
+selection and reconciliation. Notifications and budgets remain future work.
+
+Movimientos now separates pending cards from modal forms and collapsed history.
+Choose an account on creation; monthly occurrences inherit it automatically.
+Existing monthly records can remember the selected account on confirmation.
+Saved accounts simplify confirmation, but a scheduled date never changes cash
+without the user's explicit receipt/payment confirmation.

@@ -67,7 +67,7 @@ Endpoint shapes, versioning, error envelopes, and public API contracts are **Pen
 
 The Expo/React Native TypeScript application presents registration, setup, planning, investment, simulation, and monthly-close workflows. Each completed domain milestone includes its minimal usable mobile screen; mobile work is not deferred to a final integration phase. The application must show actual values, forecasts, and assumptions distinctly and provide calculation explanations supplied by approved backend behavior.
 
-The authenticated mobile shell currently uses Expo Router bottom tabs for Accounts, Month, Goals, Investments, and Profile. Accounts is the only financial tab with working data; the other financial tabs explicitly show a coming-soon state. Profile is separate from account balances and contains user data and logout controls. State management beyond authentication, offline behavior, localization, and detailed accessibility targets are **Pending decision**.
+The authenticated mobile shell currently uses Expo Router bottom tabs for Accounts, Month, Goals, Investments, and Profile. Accounts and Month have working data; Goals and Investments show a coming-soon state. Profile is separate from account balances and contains user data and logout controls. State management beyond authentication, offline behavior, localization, and detailed accessibility targets are **Pending decision**.
 
 ## Persistence with PostgreSQL
 
@@ -84,6 +84,26 @@ Balance changes create historical snapshots. Referenced accounts and goals are a
 The first accounts slice persists `financial_accounts` and `account_balance_snapshots` separately. An account stores its current signed cash balance, currency, liquidity flag, and last balance-update time. Creation and each absolute balance update append a snapshot in the same transaction. The redundant general-purpose account `updated_at` column was removed; balance and archive timestamps remain. Account queries and mutations always include the authenticated user's identifier; archived accounts are hidden from active-account operations. The versioned account API currently supports create, paginated active listing, read, balance update, currency-scoped signed cash totals, paginated balance history, and archive. Account cash totals are independent of listing pages. The mobile overview previews five accounts and the management screen uses bounded pages of 50; the selected account also displays read-only balance history in pages of 20, with request cleanup to ignore responses after unmounting or changing pages. Snapshot amounts remain decimal strings in the client and timestamps display in the financial timezone. Mobile removal calls the existing owned archive endpoint after inline confirmation, then reloads the first active-account page and totals. It retains persisted records and prevents duplicate submissions. Stale totals are hidden if refreshing fails after successful archival. Account metadata editing and a dedicated archived-account management view remain for a later bounded slice.
 
 Technical timestamps are stored in UTC. Financial dates, today, due dates, and month boundaries use `America/Argentina/Cordoba`.
+
+The first M3 slice stores `planned_income` and `planned_commitments` in separate
+tables with owner foreign keys, `NUMERIC(20,2)` amounts, SQL `DATE` financial
+dates, UTC creation timestamps, and constraints for supported currencies,
+positive amounts, `PLANNED`, and supported recurrence types. The new additive Alembic migration
+does not modify existing account tables. Domain validation rejects invalid
+amounts; schemas reject floats and invalid boundary data. Services create only
+planning records. Repositories scope all reads by authenticated owner and use
+date/UUID ordering with bounded offset pagination.
+
+`POST` and `GET /api/v1/income` and `/api/v1/commitments` create and list records.
+GET accepts optional year/month (defaulting to financial today), include_overdue
+(default true), limit (50 by default, at most 100), and offset. Prior-month planned
+records are included by default. Future-month records can be queried via API.
+Tu mes lists the selected month and older pending records in independent pages
+of 20. It refreshes on focus, date changes, explicit refresh, and successful
+creation. Request generations discard stale reads; form guards prevent concurrent
+submissions. This is not server-side idempotency: an ambiguous network failure
+may require checking the refreshed list before a manual retry. No dependencies
+or account mutations are introduced.
 
 ## Core Data Flows
 
@@ -124,6 +144,30 @@ Registration validates email and password at the API boundary, while the mobile 
 
 ## Currency and Calculation Boundaries
 
+Saved account preferences are nullable foreign keys on monthly templates and
+their occurrences, distinct from actual confirmation account references.
+Creation validates ownership, archival and currency. Monthly insertion inherits
+the template preference; select-in loading supplies account names for the list
+without a query per record. Remembering an account acquires the template and
+pending-occurrence locks before the account lock and commits with confirmation.
+Completed occurrences are preserved. Retry identity includes the remember flag.
+Migration 0008 leaves older records unassigned. React Native modal sheets separate
+creation and confirmation from the pending list; no new dependency is required.
+
+### Account-linked planning confirmation
+
+The confirmation service locks an owned planning occurrence and then its active
+owned account. Balance edits and archival acquire the same account row lock.
+It commits status, account reference, reconciliation option, timestamp and any
+balance snapshot in one transaction. Identical retries are idempotent; different
+confirmation parameters conflict. The pure confirmation domain function applies
+an exact signed Decimal movement and rejects currency mismatch or storage
+overflow. The already-included option preserves balance/history. Home inputs
+exclude received income and paid commitments through their existing status
+filters. No scheduler, integration or dependency is added. Migration 0007 keeps
+existing plans unchanged and refuses downgrade when confirmed records would lose
+their audit history. Notifications and budgets are still future capabilities.
+
 All monetary operations use the approved decimal types and rounding policy. Availability is calculated independently for ARS and USD and is never converted or combined. The user's default reference currency is ARS and may be changed to USD. Reference-currency net worth may combine currencies only with an explicit manually entered exchange rate whose value, manual source, quote direction, and UTC timestamp are retained. A missing required rate prevents consolidation while separate currency totals remain available. The domain keeps cash balances, allocations, internal transfers, expected income, simulations, and investment market value semantically distinct.
 
 Goal projection, monthly-savings metrics, advanced investment formulas, and remaining net-worth rules remain governed by `financial-rules.md`. Architecture components must not supply fallback financial behavior when a rule is **Pending decision**.
@@ -150,4 +194,73 @@ No provider or protocol is selected. An integration requires legal, commercial, 
 
 ## Architecture Decisions Still Pending
 
+### Planning maintenance and user data
+
+Migration 0009 adds monthly change versions, a stop month and immutable
+confirmation correction events. Maintenance locks template then occurrence then
+account; ordinary confirmation keeps occurrence then account. Corrections keep
+the original confirmation timestamp as their retry identity, so a stale retry
+cannot undo a newer confirmation. Existing account snapshots are never rewritten.
+Amounts/dates on completed records remain unchanged when a version is added.
+
+Export uses a single PostgreSQL JSON-producing UNION ALL statement across owned
+records. NUMERIC fields are cast to text before JSON encoding; authentication
+secrets are explicitly excluded. DELETE verifies the current Argon2 password,
+then PostgreSQL cascades the root user deletion atomically. HTTP responses use
+no-store. Operational backup/log retention is a deployment requirement.
+
+The mobile export uses SDK-compatible expo-file-system and expo-sharing to create
+and share a JSON file on native platforms, removing the temporary file afterwards.
+Web uses a local Blob download and revokes its URL. No financial export is
+uploaded to an external service by the app. Native sharing and deletion require
+device acceptance testing before release.
+
 Material decisions should be recorded under `docs/decisions/` when they are made. Authentication and mobile session handling are defined in ADRs 0002 and 0003. Remaining topics include package boundaries, API conventions beyond authentication, detailed persistence behavior, deployment, observability, backup, retention, and integration providers.
+
+## Monthly planning implementation
+
+`monthly_plans` keeps the original income/commitment amount and calendar.
+`monthly_plan_changes` appends effective-month amount/day versions; confirmed
+occurrences remain immutable. Users can explicitly update the preferred account
+during confirmation, and stopped_from bounds generation. Instances retain a
+nullable template foreign key and recurrence period, constrained consistently
+with ONE_TIME/MONTHLY and unique per template/month. Services lock owned
+templates with SELECT FOR UPDATE and insert batches of at most 500 occurrences
+with ON CONFLICT DO NOTHING. An elapsed-month checkpoint bounds repeat work;
+requested future months do not advance it. Calendar generation is pure domain
+code. No scheduler, queue or new dependency is required. GET consultation can
+materialize planned instances, but never modifies recorded account cash.
+
+After acquiring template locks, generation reads effective versions for all
+selected plans in one query and reuses them for catch-up and future previews.
+An already-covered month does not query versions. Version ordering remains by
+effective month and ID, preserving later edits within the same effective month.
+
+Local Docker startup applies Alembic migrations before Uvicorn starts. Code
+changes still require rebuilding the backend image; missing planning routes on
+an old image return 404. The mobile client translates that specific failure into
+an actionable backend-update message. Additive migrations preserve one-time
+records. Downgrade refuses to remove monthly tables when templates exist.
+
+## Home snapshot and expense preview
+
+The input repository uses one UNION ALL statement so balances and movement
+statuses share one PostgreSQL MVCC snapshot, including concurrent confirmations.
+Generation checks only templates whose checkpoint precedes the requested/current
+month; it avoids locking/reinserting already elapsed periods. Stopped templates
+stop iteration at the inclusive stop month. The domain still calculates Decimal
+results from exact per-currency inputs; no exchange or formula changes are added.
+
+GET /api/v1/home uses authenticated ownership and the current Argentina financial
+date. HomeService materializes current monthly planning records; HomeRepository
+reads all relevant owned balances and planned events, independently of UI
+pagination. Pure cash_flow_snapshot computes a limited diagnostic using Decimal.
+Responses serialize decimal strings. This additive API needs no schema migration.
+
+The mobile home uses a currency selector (reference currency by default), a
+current-money card, payment/income breakdown, separate forecast and a local
+expense preview using bigint cents. It discards obsolete reads on focus/auth
+changes. No preview request or financial mutation is sent to the backend.
+Navigation hides unfinished goal/investment routes while preserving their files.
+The three visible tabs are Inicio, Movimientos and Perfil. Safe-area-aware tab height
+keeps labels visible. Existing account management remains directly accessible.

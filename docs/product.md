@@ -42,7 +42,7 @@ every user-owned resource is isolated from other users. Social login,
 multi-factor authentication, and the exact account-recovery flow are outside
 the initial requirement or **Pending decision**.
 
-Registration explains invalid email syntax, password-length and confirmation errors before submission. A duplicate email produces an explicit conflict message. The current Accounts tab shows recorded balances only; Profile has its own tab for user details and logout. Month, Goals, and Investments are visible in bottom navigation but clearly marked as coming soon. No unavailable financial metric is shown as if it were implemented.
+Registration explains invalid email syntax, password-length and confirmation errors before submission. A duplicate email produces an explicit conflict message. The current navigation has Inicio, Movimientos and Perfil. Inicio explains the month with a limited cash-flow snapshot and an additional-expense preview; Mi dinero manages accounts outside the tab bar. Movimientos supports the M3 slice described below. Goals and Investments remain in the roadmap and are hidden from navigation until usable. No unavailable financial metric is shown as if it were implemented.
 
 ### Financial accounts
 
@@ -54,11 +54,44 @@ The account view shows each signed balance and a separate signed total of active
 
 ### Income, commitments, and flexible budgets
 
+**Current delivery: planned records and monthly recurrence.** Users create and consult one-time or monthly
+`PLANNED` income and commitments in Tu mes. Each has a description, strictly
+positive ARS/USD amount, and valid past, present, or future calendar date.
+The selected month and all older pending records remain accessible, with overdue
+labels and independent pagination. Creation does not change accounts or their
+history. Monthly plans start on the chosen first date and use the last day of
+a month when the original day does not exist. Full received/paid confirmation
+now selects an account and either updates its balance or marks the movement as
+already included. Identical retries do not apply it twice. Monthly amount/day edits for future
+months, stopping repetitions, and auditable confirmation corrections are now
+delivered. Installments and flexible budgets remain future work. M2 and M3 are still partial.
+
 Users record one-time or monthly income with an expected date and a status of `PLANNED`, `RECEIVED`, or `CANCELLED`. Only `PLANNED` income dated from today through month end qualifies for the month-end forecast. Overdue planned income is excluded and generates a warning. Expected income is never treated as received money.
 
 Users also record commitments such as rent, services, subscriptions, credit-card payments, debt payments, and installments. Commitment statuses are `PLANNED`, `PARTIALLY_PAID`, `PAID`, and `CANCELLED`. Unpaid planned or partially paid amounts are deducted according to their remaining amount, including when overdue; paid and cancelled commitments are excluded. Monthly recurrence creates period instances idempotently.
 
-Instead of requiring every purchase, the MVP provides a flexible monthly budget. Its initial categories are daily life, activities and entertainment, and unexpected expenses. Users may add categories. Usage is entered as aggregate spending for the month rather than as individual purchases. Remaining flexible budget is the planned amount minus that aggregate spending.
+Instead of requiring every purchase, the MVP provides a flexible monthly budget.
+Its initial categories are daily life, activities and entertainment, and
+unexpected expenses. Users may add categories. Aggregate spending remains
+supported; individual expense entry is optional. The intended budget section
+shows monthly planned amounts, spending, remaining amounts, excess and default
+associated accounts, with account selection for each expense. Remaining budget
+is the planned amount minus spending, floored at zero. Excess stays in the month
+where it occurred and is shown explicitly; it does not automatically change other
+categories, goals or next month's planned amount. The user may explicitly adjust
+a future plan. These requirements were approved on 2026-10-05 and are not yet
+implemented; aggregation and reconciliation rules remain pending.
+
+Income and payments are associated with an account on full confirmation.
+Explicit confirmation updates the selected account balance once, in the same
+currency, or records that the movement is already included without changing it.
+Scheduled
+recurring dates will request confirmation through configurable reminders;
+reaching the date alone does not change real money. Preferred accounts are saved
+on creation and can be remembered across monthly confirmations. Reminders remain
+future work. The confirmation slice does
+not support partial amounts or backdated actual dates. Auditable corrections
+reverse a selected confirmation against current cash, then permit reconfirmation.
 
 ### Goals and allocations
 
@@ -150,3 +183,37 @@ Numeric adoption, retention, accuracy, and performance targets are **Pending dec
 - Whether non-investment assets and liabilities require dedicated MVP interfaces.
 - Exact success metrics and measurement periods.
 - Whether export and deletion are required for private testing or only before public launch.
+
+## Simpler product entry (2026-10-01)
+
+The initial audience is a person with income and major fixed bills who wants to
+understand the month without maintaining a daily purchase ledger. The first
+interaction asks for existing cash balances; the second records major bills,
+with monthly repetitions. There is no mandatory exhaustive expense entry.
+
+Inicio answers what remains after registered pending bills, shows the balance
+and bill components, and separates expected-income projections. A lightweight
+additional-expense preview makes consequences observable without saving data.
+The exact diagnostic and exclusions are specified in financial-rules.md. It is
+not the complete safe-to-spend calculation: budgets and goals are not silently
+assumed to be zero. The empty state presents a concrete two-step start instead
+of an unexplained financial zero. Navigation exposes only working areas.
+
+Movimientos separates payments and income, uses familiar presets (rent, services,
+card, salary) and keeps advanced recurrence explanations in the form. Mi dinero
+uses everyday wording in place of liquidity jargon. No existing records are
+migrated or deleted by the redesign.
+
+The movements redesign separates a compact pending list from modal creation and
+confirmation sheets. Completed records are collapsed into a history disclosure
+for the current page. Creation selects an account once and derives currency from
+it; monthly occurrences inherit that preference. Existing monthly records can
+explicitly remember the account at confirmation. The primary action confirms
+receipt/payment and updates the saved account; already-included reconciliation
+is a secondary action. All mutations still require an explicit user action.
+
+Full available-money and goal effects remain the product destination. Monthly amount/day edits for future months, stopping repetitions and auditable
+confirmation corrections are delivered. Profile includes complete JSON export
+and password-confirmed account/data deletion. Public launch still requires
+the operational and security readiness checks in the roadmap. Full confirmation now removes received/paid occurrences
+from pending calculations without duplicating recorded cash.

@@ -87,6 +87,20 @@ milestones below are not implemented by this slice.
 
 ### M3 — Income, commitments, and flexible budgets
 
+**Current status — planned records and monthly recurrence.** Backend and Tu mes
+support creation and paginated consultation of `ONE_TIME` and `MONTHLY`,
+`PLANNED` income and commitments. Monthly occurrences start on the selected
+first date, clamp missing days to month end, and remain unique per template/month
+even under concurrent requests. Mobile includes month navigation.
+Amounts must be positive; past, present, and future dates are accepted.
+The current financial month and all older pending records remain accessible
+without changing account balances or history. There are no available-money,
+savings, or full availability calculations. Full account-linked received/paid
+confirmation is now delivered, with explicit reconciliation and retry protection.
+M3 remains incomplete: one-time cancellation/editing, installments, partial payments,
+flexible budgets, and aggregate spending are not delivered. Remaining M2 work
+does not block this independent planning slice and is unchanged.
+
 **Depends on:** M2 and approved recurrence/status rules.
 
 Implement one-time and recurring income, commitments and installments, flexible-budget plans and aggregate monthly spending, and their minimal mobile list and editor screens.
@@ -98,7 +112,7 @@ Implement one-time and recurring income, commitments and installments, flexible-
 - Financial dates and month boundaries use `America/Argentina/Cordoba`; technical timestamps use UTC.
 - Expected income remains distinguishable from received income.
 - Users can create monthly flexible budgets and enter aggregate spending without recording every purchase.
-- Remaining flexible budget equals planned budget minus aggregate spending for the month.
+- Remaining flexible budget equals planned budget minus aggregate spending for the month, floored at zero. Excess is displayed separately in the month of spending and does not automatically change next month's planned amount or goal allocations.
 - The mobile app supports the required income, commitment, budget, and aggregate-spending entries.
 - Tests cover idempotent recurrence, partial remaining amounts, overdue records, cancellations, and financial month boundaries.
 
@@ -249,3 +263,37 @@ Post-MVP work is considered only after MVP behavior is stable and each external 
 7. Cited financial news and AI summaries that separate facts, interpretation, and uncertainty.
 
 No provider, API, or integration is selected or available yet. WhatsApp is the fixed first post-MVP product feature; provider selection, legal review, technical proofs of concept, and the order of later items are **Pending decision**.
+
+## Immediate product usability priorities (2026-10-01)
+
+The new home snapshot and expense preview provide an understandable entry into
+planning, without claiming that M5 or M7 is complete. Full received/paid
+confirmation and explicit reconciliation are now delivered. Monthly stopping, future amount/day editing and auditable confirmation corrections
+are delivered. Next approve and implement flexible-budget and goal-allocation
+rules so the primary result can become the complete safe-to-spend value.
+Empty goals/investment tabs stay hidden until those capabilities are usable.
+
+### Account-linked confirmation and budgets (2026-10-05)
+
+Approved product direction: associate income/payments with accounts, request
+confirmation on recurring dates through configurable reminders, and update the
+selected account once on confirmation. Budget categories show planned spending,
+actual spending, remaining amounts, excess and default accounts. The approved
+excess rule is specified in financial-rules.md. Full confirmation now delivers
+account selection, balance updates or the already-included option, atomic history
+and safe retries for both one-time and monthly occurrences. Budgets and
+notifications remain unimplemented.
+
+Saved accounts are now delivered: creation stores the preference, generation
+inherits it, and explicit monthly confirmation can remember it for pending and
+future occurrences. Movimientos replaces the former Mi plan label, separates
+modal forms from the list, and collapses completed records into paged history.
+This still requires explicit receipt/payment confirmation. Automatic reminders,
+budget spending and broader one-time edits remain future work. Monthly maintenance
+and full confirmation corrections are delivered.
+
+Next small slices: settle category aggregation and combined
+spending reconciliation; implement budget planning and confirmed spending;
+finally implement reminders
+after their delivery/configuration requirements are settled. Resolve category
+aggregation and combined aggregate/individual spending before their calculation.

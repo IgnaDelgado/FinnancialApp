@@ -104,6 +104,64 @@ The MVP supports `ONE_TIME` and `MONTHLY` recurrence. Monthly templates create p
 
 The MVP financial timezone is `America/Argentina/Cordoba`. Financial dates, the meaning of today, due dates, and month boundaries use this timezone. Technical timestamps are stored in UTC and converted only for presentation or financial-date interpretation.
 
+### First M3 slice: one-time planned records
+
+Approved on 2026-10-01: income and commitment amounts must be strictly positive.
+Zero and negative inputs are rejected. Inputs must fit `NUMERIC(20,2)` and have
+no more than two decimal places, including trailing zero decimals; they are not
+rounded on entry. Decimal strings are the mobile/API money boundary; binary
+floating-point inputs are rejected. No calculation requiring rounding is added
+by this slice.
+
+Creation accepts past, present, and future valid ISO calendar dates
+(`YYYY-MM-DD`, years 0001–9999). These are financial dates, not timestamps.
+Only `ONE_TIME` records are created, always `PLANNED`. Neither creation nor
+consultation changes account balances or snapshots, receives income, or pays
+a commitment. No availability, savings, or projection is calculated.
+
+Month consultation includes the selected month's records and, by default,
+all older `PLANNED` records. Earlier pending records remain accessible after
+month rollover. Records are ordered by financial date ascending and UUID
+ascending, with a default limit of 50, maximum 100, and nonnegative offset.
+`include_overdue=false` limits consultation to the selected month. This is a
+listing policy only; it does not alter income forecast eligibility or commitment
+deductions. The mobile screen displays the current financial month, in pages
+of 20 per resource, and labels any date before financial today as overdue.
+Future-month creation is accepted and its confirmation explains that it will
+appear when that month arrives; the API can consult any supported month.
+
+Received/paid/cancelled transitions, editing, rescheduling, deletion, monthly
+recurrence, partial payments, installments, budgets, and financial calculations
+are outside this slice. Their existing pending decisions remain unchanged.
+
+### Monthly planning extension (approved 2026-10-01)
+
+This extension supersedes the first slice's one-time-only delivery restriction.
+The same strictly positive Decimal amount, currency, date, and `PLANNED` rules
+apply to both recurrence types. A monthly template uses the chosen first date;
+no occurrence predates it. Its original day remains the anchor. If that day is
+missing in a month, the occurrence uses that month's last day. For example,
+31 January 2027 repeats on 28 February and 31 March; leap-year February uses 29.
+
+Creation atomically saves the template and first occurrence. Consultation fills
+missed months through the current financial month, preserving pending records
+after inactivity. A future-month consultation creates only that requested month,
+without creating intervening future months. It never advances the elapsed-month
+checkpoint. A database unique constraint on template/month and serialized
+per-template generation prevent duplicate occurrences, including concurrent reads.
+Each occurrence retains its own amount, currency and date; ARS and USD are never
+combined. No account balances or snapshots change.
+
+Tu mes navigates past, current and future months, keeping its pages of 20 and
+older pending records. Its DD/MM/YYYY input is normalized to ISO at the API.
+Template amounts and calendars remain immutable. Preferred accounts can be
+updated explicitly as described in the saved-account slice below.
+Editing, stopping/cancelling repeats,
+partial-payment history and full availability calculations remain pending.
+Full received/paid transitions are delivered by the confirmation slice below.
+A manually retried POST after an ambiguous network failure can create another
+template; users should refresh the list before retrying.
+
 ## Flexible Monthly Budget
 
 The MVP supplies daily life, activities and entertainment, and unexpected-expense categories, and permits additional categories. Detailed purchase entry is optional. Users enter aggregate flexible spending for the month.
@@ -111,12 +169,125 @@ The MVP supplies daily life, activities and entertainment, and unexpected-expens
 For a flexible budget in one currency:
 
 ```text
-remaining flexible budget =
-    planned flexible budget
-    - aggregate flexible spending registered for the month
+remaining flexible budget = max(
+    planned flexible budget - aggregate flexible spending registered for the month,
+    0
+)
+
+budget excess = max(
+    aggregate flexible spending registered for the month - planned flexible budget,
+    0
+)
 ```
 
-The remaining amount is deducted by `available_today`. Category aggregation, rollover, mid-month changes, correction history, and presentation when aggregate spending exceeds the planned budget are **Pending decision**.
+The remaining amount is deducted by `available_today`. Category aggregation,
+mid-month changes, correction history, and unused-budget rollover are
+**Pending decision**.
+
+### Budget excess and account-linked movements (approved 2026-10-05)
+
+This decision supersedes the unclamped remaining-budget formula. Excess belongs
+to the financial month in which the spending occurred. It is displayed separately
+and never makes the remaining budget negative. The next month's planned amount
+stays unchanged unless the user explicitly changes it; excess is not carried
+forward as a new expense, obligation, or automatic reduction of that plan.
+Other categories and goal allocations are not adjusted automatically.
+
+The intended budget interface shows category, monthly planned amount, spending,
+remaining amount, excess, and a default associated account. The user can select
+a different account for an actual expense. Recording a budget plan does not
+change an account balance. Detailed purchases remain optional.
+
+Confirmed income increases the selected account balance once. Confirmed payments
+and flexible expenses decrease the selected account balance once. An expense
+recorded under a budget also contributes to that month's spending once; the
+budget total is not a second account debit. Each movement and its associated
+account must belong to the same user and use the same currency. Merely reaching
+an expected date never changes a balance or confirms receipt/payment.
+
+Recurring movements have a scheduled financial date and configurable reminders
+to request confirmation. A reminder does not confirm a movement. Reminder timing,
+delivery channel, permissions and behavior while the application is closed remain
+**Pending decision**; notifications are not currently implemented.
+
+Synthetic example, excluding commitments and goals: opening ARS cash is
+500,000.00 and the planned budget is 100,000.00. Confirmed spending of 120,000.00
+leaves actual cash of 380,000.00, a remaining budget of 0.00, and an excess of
+20,000.00. The balance already reflects the full expense. Availability must not
+deduct that 120,000.00 again or add back 20,000.00 by subtracting a negative
+remaining budget. The next month's unchanged plan remains 100,000.00.
+
+Budget spending and reminders remain approved requirements, not delivered
+functionality. Full account-linked confirmation is delivered as specified below;
+reversals/corrections and partial-payment history remain pending. Combining
+aggregate spending entry with individual expenses must prevent double counting;
+its reconciliation policy and category aggregation remain **Pending decision**.
+
+### Full income/payment confirmation and reconciliation (2026-10-05)
+
+The user explicitly selects an active owned account in the record's currency and
+one of two options. `already_in_balance=false` applies the full planned amount
+to current account cash (add income, subtract payment) and appends one balance
+snapshot with a UTC timestamp. `already_in_balance=true` means the user confirms
+that their recorded balance already includes this movement: status changes but
+balance, balance-update timestamp and snapshot history stay unchanged. Neither
+option changes the original amount, financial date, or recurrence template.
+
+The first slice supports full confirmation only: `PLANNED` to `RECEIVED` for
+income and `PLANNED` to `PAID` for commitments. Each occurrence stores the chosen
+account, reconciliation option and UTC confirmation timestamp. That timestamp
+records when the user confirmed; it is not a user-entered actual receipt/payment
+date. A future planned date does not block explicit confirmation when the movement
+has actually occurred. Different actual amounts, backdated actual dates, partial
+payments, cancellations and undo/corrections are not supported in this slice.
+
+Confirmation and any balance change/snapshot commit atomically. Record and account
+writes are serialized so concurrent confirmations do not duplicate a movement
+or lose independent movements. An identical retry returns the existing result
+without another balance change/snapshot, including after account archival.
+A retry with a different account or reconciliation option returns a conflict.
+New confirmations reject archived accounts and currency mismatch. Signed balances
+remain permitted; an arithmetic result outside `NUMERIC(20,2)` is rejected without
+changing state. No rounding or conversion occurs.
+
+Month consultation retains completed records in their planned month, but does not
+carry them as overdue pending records into later months. Confirmed income is no
+longer forecast; paid commitments are no longer deducted as pending. Monthly
+generation keeps completed occurrences and leaves later occurrences planned.
+The mobile flow uses the saved account at confirmation, with an option to change
+it. Configurable notifications remain future work.
+
+### Saved accounts and simpler movements flow (2026-10-05)
+
+Users can select a preferred active owned account when creating income or a
+commitment. It must use the movement's currency. For monthly creation, the
+template, first occurrence and subsequently generated occurrences retain that
+preference. This is configuration only: no balance, snapshot or status changes.
+Existing records remain valid without a preferred account; no account is inferred
+or assigned during migration. Preferred and actual confirmed accounts are distinct.
+
+When confirming a monthly occurrence, the user may explicitly select "Use this
+account every month" (`remember_account=true`). Confirmation then atomically
+updates the template and all its still-pending generated occurrences, including
+older pending occurrences, to that selected account. Previously completed
+occurrences and their actual account/history remain unchanged. Later generation
+inherits the template's current preference. This is the only supported template
+configuration change; amount, dates and recurrence edits remain outside this slice.
+
+An identical confirmation retry must use the same account, balance-reconciliation
+option and remember-account flag. A different flag conflicts without changing the
+template. Remembering is supported only for monthly occurrences. Lock ordering
+is template, pending occurrences, selected occurrence, account; ordinary
+confirmations still lock their occurrence then account. This serializes preference
+changes with monthly generation and prevents duplicate balance mutations.
+
+Archived preferred accounts may remain visible as historical configuration;
+the user must choose an active account for a new confirmation. Generation does
+not reactivate or replace an archived account. The mobile creation flow derives
+currency from the explicitly chosen account, without conversion. A saved account
+reduces selection steps, but reaching a date still never changes money or
+auto-confirms an expected income/payment. Full-amount and correction limitations
+from the preceding slice remain unchanged.
 
 ## Goals and Goal Progress
 
@@ -188,3 +359,91 @@ At minimum, the system must reject or stop calculations that would:
 - Modify a confirmed monthly close without first recording an explicit reopen.
 
 Error wording, validation timing, and recovery behavior are **Pending decision**.
+## Home cash-flow snapshot (2026-10-01)
+
+The home screen provides a deliberately limited diagnostic, `cash_after_bills`,
+not `available_today`. For each currency it sums positive active liquid account
+balances once and subtracts every PLANNED commitment due on or before current
+financial month end, including overdue commitments. Non-liquid accounts,
+archived accounts and investment positions are excluded. Negative active account
+balances are disclosed separately as a signed total, not silently netted out.
+
+`forecast_after_bills` adds only PLANNED income dated from financial today through
+month end. Older pending income is excluded and counted in a warning. Income is
+not included in current cash until confirmed as received. Both results may be negative. These values omit
+flexible spending, goal allocations and goal contributions and must never be
+labelled safe-to-spend. The interface states these omissions beside the result.
+There is no consolidation across currencies, return assumption or rounding of
+inputs. Results use Decimal and serialize as exact two-decimal strings.
+
+The additional-expense preview subtracts a positive amount in the selected
+currency from cash_after_bills only. It runs locally with integer cents, remains
+hypothetical and creates no financial record. It does not estimate goal effects.
+The snapshot materializes current monthly planning occurrences before summing
+all matching records, independently of list pagination. An empty setup is not
+presented as financial advice; the user is guided to add balances and major bills.
+
+Balances, pending commitments and expected income must be read from one database
+snapshot. A concurrent confirmation must never combine a pre-confirmation balance
+with post-confirmation status. The repository reads all three sources in one SQL
+statement; monthly income and commitment generation runs in one preceding transaction.
+
+## Planning maintenance (approved 2026-10-05)
+
+This decision supersedes the restrictions on monthly edits, stopping repetitions
+and confirmation corrections in the preceding delivery slices.
+
+Stopping a monthly plan takes an inclusive financial month. The template keeps
+that stop month; its PLANNED occurrences in that and later months become
+CANCELLED, and no further occurrences are generated there. Earlier pending
+occurrences and all completed occurrences remain unchanged. Repeating the same
+stop is idempotent; choosing a different month afterwards conflicts. Stopping
+does not move cash, restore a payment, or remove audit history. Restarting is not
+supported: the user creates a new plan.
+
+Editing a monthly amount/day takes a first financial date in a strictly future
+month. The date supplies the effective month and day anchor. Amounts follow the
+existing positive NUMERIC(20,2) rule; currency and ownership never change. Each
+edit appends a version with its effective month, amount, day and UTC timestamp.
+For a month, the latest version effective on or before that month supplies the
+amount/day, with missing days clamped to month end. Future PLANNED generated
+occurrences are updated accordingly; completed occurrences keep their original
+amount/date/account. Versions effective later remain applicable. Past and current
+occurrences remain unchanged. Edits on/after a stopped month are rejected.
+
+Correction explicitly reverses one identified confirmation timestamp, retaining
+an immutable audit event with the original amount, currency, account,
+reconciliation/remember flags, confirmation time and correction time. If the
+original confirmation applied money, the inverse amount is applied to the
+original active owned account's CURRENT balance and one new snapshot is appended.
+If it was already included, no balance or snapshot changes. No previous balance
+is restored, and unrelated later movements are preserved. Storage overflow and
+archived accounts for a cash adjustment are rejected atomically.
+
+After correction the occurrence is PLANNED again, ready for explicit new
+confirmation; if its template has already stopped for that month it is CANCELLED
+instead. The saved template account is not rolled back. An identical correction
+retry returns its existing audit event, even after a new confirmation; a stale
+confirmation timestamp conflicts. Original snapshots and correction events remain
+available in export. Record/account writes and template maintenance are serialized.
+Different actual amounts, partial payments and arbitrary one-time edits remain
+outside this slice.
+
+## User data portability and deletion (2026-10-05)
+
+Authenticated users can export a versioned JSON document containing their profile,
+active and archived accounts, complete balance snapshots, planned/completed/
+cancelled movements, monthly templates, edit versions and correction history.
+Export does not generate occurrences or change data. All components use one
+database snapshot, amounts remain decimal strings, and dates/timestamps retain
+their meaning. Password hashes, refresh tokens and authentication internals are
+never exported. Responses disable caching.
+
+Account deletion requires an authenticated user, their current password and an
+explicit UI confirmation. It permanently deletes that user's stored profile,
+sessions and financial records atomically, invalidating access and refresh tokens.
+Other users' data is untouched. The UI recommends export beforehand and clears
+local credentials after successful deletion. An ambiguous connection failure must
+not be reported as success. Backups, deployment log retention and operational
+erasure policy must be configured before public deployment; database deletion is
+not a claim that all independently managed backups have been erased.

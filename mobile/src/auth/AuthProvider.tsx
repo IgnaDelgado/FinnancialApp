@@ -16,6 +16,7 @@ import {
 } from './tokenStorage';
 import { completeGlobalSignOut } from './globalSignOut';
 import type { LoginInput, RegistrationInput, Session, TokenPair, User } from './types';
+import { deleteUserAccount } from '../profile/api';
 
 type AuthContextValue = {
   isBootstrapping: boolean;
@@ -25,6 +26,7 @@ type AuthContextValue = {
   signIn: (input: LoginInput) => Promise<void>;
   signOut: () => Promise<void>;
   signOutAll: () => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
   signUp: (input: RegistrationInput) => Promise<void>;
   refreshProfile: () => Promise<void>;
   withAccessToken: <T>(operation: (accessToken: string) => Promise<T>) => Promise<T>;
@@ -140,6 +142,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
+  async function deleteAccount(password: string) {
+    await completeGlobalSignOut(
+      () => withAccessToken((token) => deleteUserAccount(token, password)),
+      clearRefreshToken,
+      () => updateSession(null),
+    );
+  }
+
   const value: AuthContextValue = {
     isBootstrapping,
     restoreError,
@@ -148,6 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     signOutAll,
+    deleteAccount,
     signUp,
     refreshProfile,
     withAccessToken,
