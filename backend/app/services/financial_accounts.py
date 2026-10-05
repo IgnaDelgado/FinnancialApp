@@ -63,8 +63,10 @@ class FinancialAccountService:
     def cash_totals(self, user_id: UUID) -> dict[Currency, Decimal]:
         return sum_account_balances(self._accounts.list_active_balances(user_id))
 
-    def get_active(self, user_id: UUID, account_id: UUID) -> FinancialAccount:
-        account = self._accounts.get_active(user_id, account_id)
+    def get_active(
+        self, user_id: UUID, account_id: UUID, *, lock: bool = False
+    ) -> FinancialAccount:
+        account = self._accounts.get_active(user_id, account_id, lock=lock)
         if account is None:
             raise AccountNotFoundError
         return account
@@ -72,7 +74,7 @@ class FinancialAccountService:
     def update_balance(
         self, *, user_id: UUID, account_id: UUID, balance: Decimal
     ) -> FinancialAccount:
-        account = self.get_active(user_id, account_id)
+        account = self.get_active(user_id, account_id, lock=True)
         recorded_at = datetime.now(UTC)
         account.current_balance = balance
         account.balance_updated_at = recorded_at
@@ -92,6 +94,6 @@ class FinancialAccountService:
         return self._accounts.list_snapshots(account.id, limit=limit, offset=offset)
 
     def archive(self, *, user_id: UUID, account_id: UUID) -> None:
-        account = self.get_active(user_id, account_id)
+        account = self.get_active(user_id, account_id, lock=True)
         account.archived_at = datetime.now(UTC)
         self._session.commit()

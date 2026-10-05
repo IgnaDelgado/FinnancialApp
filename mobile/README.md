@@ -25,7 +25,10 @@ Expo SDK 57 and React Native client for authentication and manual financial acco
   start on the chosen date; missing days use month end (31 January → 28 February
   → 31 March in a non-leap year). Financial dates use Argentina.
 - Registering an expected event does not change account balances or snapshots.
-  Received/paid states and record modifications remain for a later slice.
+  Mi plan now confirms full received income or paid commitments, selecting a
+  same-currency account and either updating its balance or marking the movement
+  as already included. Safe retries prevent duplicate movements. Confirmations
+  cannot be undone in this slice; record modifications remain future work.
 - Inicio shows cash after pending bills, a separate forecast, setup guidance and
   an exact-cent additional-expense preview. This is not full safe-to-spend money.
 

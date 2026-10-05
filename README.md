@@ -36,7 +36,11 @@ Users select a month and a first date for monthly repetitions. It displays
 the selected financial month and older pending records separately by resource.
 Amounts are positive ARS/USD decimals; past and future calendar dates are
 accepted. These records do not change accounts or calculate available money.
-M3 remains partial: status transitions, modifications, stopping repetitions, installments,
+Full income/payment confirmation now selects an account and either updates its
+cash balance once or records that the movement is already included. Confirmed
+income and paid commitments leave pending calculations; identical retries do not
+duplicate balance/history changes. M3 remains partial: cancellations, corrections,
+modifications, stopping repetitions, installments,
 and budgets remain future work, as do M4–M9. The
 remaining M2 tasks and milestone order are tracked in
 [the roadmap](docs/roadmap.md). Email verification, password recovery, abuse
@@ -223,4 +227,6 @@ end, with a separate expected-income forecast and an additional-expense preview.
 The first-use flow asks for cash balances and major bills; daily purchase logging
 is optional. Mi plan separates payments and income. Only usable areas appear in
 the tab bar. This limited snapshot is not safe-to-spend money: daily budgets,
-goal reserves and status transitions still require the remaining MVP work.
+goal reserves still require the remaining MVP work. Mi plan now lets users mark
+full income as received and full commitments as paid, with explicit account
+selection and reconciliation. Notifications and budgets remain future work.

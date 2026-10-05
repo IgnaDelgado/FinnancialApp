@@ -144,6 +144,20 @@ Registration validates email and password at the API boundary, while the mobile 
 
 ## Currency and Calculation Boundaries
 
+### Account-linked planning confirmation
+
+The confirmation service locks an owned planning occurrence and then its active
+owned account. Balance edits and archival acquire the same account row lock.
+It commits status, account reference, reconciliation option, timestamp and any
+balance snapshot in one transaction. Identical retries are idempotent; different
+confirmation parameters conflict. The pure confirmation domain function applies
+an exact signed Decimal movement and rejects currency mismatch or storage
+overflow. The already-included option preserves balance/history. Home inputs
+exclude received income and paid commitments through their existing status
+filters. No scheduler, integration or dependency is added. Migration 0007 keeps
+existing plans unchanged and refuses downgrade when confirmed records would lose
+their audit history. Notifications and budgets are still future capabilities.
+
 All monetary operations use the approved decimal types and rounding policy. Availability is calculated independently for ARS and USD and is never converted or combined. The user's default reference currency is ARS and may be changed to USD. Reference-currency net worth may combine currencies only with an explicit manually entered exchange rate whose value, manual source, quote direction, and UTC timestamp are retained. A missing required rate prevents consolidation while separate currency totals remain available. The domain keeps cash balances, allocations, internal transfers, expected income, simulations, and investment market value semantically distinct.
 
 Goal projection, monthly-savings metrics, advanced investment formulas, and remaining net-worth rules remain governed by `financial-rules.md`. Architecture components must not supply fallback financial behavior when a rule is **Pending decision**.

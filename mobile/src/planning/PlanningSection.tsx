@@ -9,6 +9,7 @@ import { FormField } from '@/components/FormField';
 import { NoticeBanner } from '@/components/NoticeBanner';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { colors, fontFamily } from '@/theme';
+import { ConfirmationForm } from './ConfirmationForm';
 import { createPlanningRecord, listPlanningRecords, type PlanningKind, type PlanningRecord } from './api';
 import { displayFinancialDate, normalizePlanningDate, recordDate, validFinancialDate, validatePlanningInput } from './validation';
 
@@ -30,6 +31,7 @@ export function PlanningSection({ kind, today, period }: { kind: PlanningKind; t
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<string | null>(null);
   const submitting = useRef(false);
   const mounted = useRef(true);
   const requestVersion = useRef(0);
@@ -86,7 +88,7 @@ export function PlanningSection({ kind, today, period }: { kind: PlanningKind; t
 
   const income = kind === 'income';
   return <View style={styles.card}>
-    <Text accessibilityRole="header" style={styles.title}>{income ? 'Tus próximos cobros' : 'Tus próximos pagos'}</Text>
+    <Text accessibilityRole="header" style={styles.title}>{income ? 'Tus cobros' : 'Tus pagos'}</Text>
     <Text style={styles.help}>{income ? 'Sueldo, trabajos o un ingreso extra.' : 'Alquiler, servicios, tarjeta y otros pagos importantes.'}</Text>
     {message && <Text accessibilityRole="alert" style={styles.help}>{message}</Text>}
     <Pressable accessibilityRole="button" disabled={saving} style={styles.button} onPress={() => { setEditor(!editor); setFormError(null); setMessage(null); }}>
@@ -112,8 +114,16 @@ export function PlanningSection({ kind, today, period }: { kind: PlanningKind; t
     {loading ? <ActivityIndicator accessibilityLabel="Cargando registros" color={colors.forest} /> : loadError ? <><NoticeBanner message={loadError} /><Pressable accessibilityRole="button" style={styles.button} onPress={() => reload()}><Text style={styles.buttonText}>Reintentar</Text></Pressable></> : records.length === 0 ? <Text style={styles.help}>Todavía no tenés planes en esta página. Empezá con un cobro o pago importante.</Text> : records.map((record) => <View key={record.id} style={styles.entry}>
       <Text style={styles.name}>{record.description}</Text>
       <Text style={styles.amount}>{formatMoney(record.amount, record.currency)}</Text>
-      <Text style={styles.help}>{displayFinancialDate(recordDate(record))} · Pendiente · {record.recurrence === 'MONTHLY' ? 'Mensual' : 'Por única vez'}</Text>
-      {recordDate(record) < today && <Text style={styles.overdue}>{income ? 'Fecha esperada vencida: todavía pendiente' : 'Vencido: todavía pendiente'}</Text>}
+      <Text style={styles.help}>{displayFinancialDate(recordDate(record))} · {record.status === 'PLANNED' ? 'Pendiente' : income ? 'Cobrado' : 'Pagado'} · {record.recurrence === 'MONTHLY' ? 'Mensual' : 'Por única vez'}</Text>
+      {record.status === 'PLANNED' && recordDate(record) < today && <Text style={styles.overdue}>{income ? 'Fecha esperada vencida: todavía pendiente' : 'Vencido: todavía pendiente'}</Text>}
+      {record.status !== 'PLANNED' && <Text style={styles.help}>{record.already_in_balance ? 'Ya estaba incluido en el saldo.' : 'Saldo actualizado al confirmar.'}</Text>}
+      {record.status === 'PLANNED' && (confirming === record.id
+        ? <ConfirmationForm key={`${ownerId}-${record.id}`} record={record} kind={kind} onCancel={() => setConfirming(null)} onComplete={(confirmed) => {
+          setConfirming(null);
+          setMessage(`${income ? 'Cobro' : 'Pago'} confirmado. ${confirmed.already_in_balance ? 'El saldo no cambió porque ya lo incluía.' : 'El saldo de la cuenta se actualizó.'}`);
+          reload();
+        }} />
+        : <Pressable accessibilityRole="button" style={styles.button} onPress={() => { setConfirming(record.id); setMessage(null); }}><Text style={styles.buttonText}>{income ? 'Marcar cobrado' : 'Marcar pagado'}</Text></Pressable>)}
     </View>)}
     <Text style={styles.help}>Página {page + 1} · Fecha más antigua primero</Text>
     <View style={styles.row}>

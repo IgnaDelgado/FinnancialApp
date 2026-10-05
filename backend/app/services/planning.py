@@ -1,10 +1,11 @@
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Literal
 from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.domain.confirmation import confirmed_balance
 from app.domain.currency import Currency
 from app.domain.planning import (
     financial_today,
@@ -12,14 +13,76 @@ from app.domain.planning import (
     monthly_dates,
     validate_planned_amount,
 )
+from app.models.financial_account import AccountBalanceSnapshot
 from app.models.planning import MonthlyPlan, PlannedCommitment, PlannedIncome
+from app.repositories.financial_accounts import FinancialAccountRepository
 from app.repositories.planning import PlanningRepository
+
+
+class PlanningRecordNotFoundError(Exception):
+    """No planning record belongs to the user."""
+
+
+class ConfirmationConflictError(Exception):
+    """A previous confirmation used different parameters."""
 
 
 class PlanningService:
     def __init__(self, session: Session) -> None:
         self._session = session
         self._records = PlanningRepository(session)
+
+    def confirm(
+        self,
+        *,
+        user_id: UUID,
+        record_id: UUID,
+        account_id: UUID,
+        already_in_balance: bool,
+        is_income: bool,
+    ) -> PlannedIncome | PlannedCommitment:
+        record = self._records.lock_record(user_id, record_id, is_income=is_income)
+        if record is None:
+            raise PlanningRecordNotFoundError
+        if record.status != "PLANNED":
+            if (
+                record.account_id != account_id
+                or record.already_in_balance != already_in_balance
+            ):
+                raise ConfirmationConflictError
+            # Identical retries succeed even if the account has since been archived.
+            self._session.commit()
+            return record
+        accounts = FinancialAccountRepository(self._session)
+        account = accounts.get_active(user_id, account_id, lock=True)
+        if account is None:
+            raise PlanningRecordNotFoundError
+        if account.currency != record.currency:
+            raise ValueError("La cuenta y el movimiento deben tener la misma moneda.")
+        confirmed_at = datetime.now(UTC)
+        if not already_in_balance:
+            account.current_balance = confirmed_balance(
+                account.current_balance,
+                record.amount,
+                account.currency,
+                record.currency,
+                is_income=is_income,
+            )
+            account.balance_updated_at = confirmed_at
+            accounts.add_snapshot(
+                AccountBalanceSnapshot(
+                    account_id=account.id,
+                    balance=account.current_balance,
+                    recorded_at=confirmed_at,
+                )
+            )
+        record.status = "RECEIVED" if is_income else "PAID"
+        record.account_id = account.id
+        record.already_in_balance = already_in_balance
+        record.confirmed_at = confirmed_at
+        self._session.commit()
+        self._session.refresh(record)
+        return record
 
     def _create_monthly_plan(
         self,

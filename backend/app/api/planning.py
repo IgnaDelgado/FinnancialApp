@@ -1,7 +1,8 @@
 from datetime import date
 from typing import Annotated
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_database_session
@@ -10,12 +11,68 @@ from app.models.user import User
 from app.schemas.planning import (
     CommitmentCreateRequest,
     CommitmentResponse,
+    ConfirmationRequest,
     IncomeCreateRequest,
     IncomeResponse,
 )
-from app.services.planning import PlanningService
+from app.services.planning import (
+    ConfirmationConflictError,
+    PlanningRecordNotFoundError,
+    PlanningService,
+)
 
 router = APIRouter(prefix="/api/v1", tags=["planning"])
+
+
+def _confirm(
+    session: Session,
+    user: User,
+    record_id: UUID,
+    request: ConfirmationRequest,
+    *,
+    is_income: bool,
+) -> IncomeResponse | CommitmentResponse:
+    try:
+        record = PlanningService(session).confirm(
+            user_id=user.id,
+            record_id=record_id,
+            account_id=request.account_id,
+            already_in_balance=request.already_in_balance,
+            is_income=is_income,
+        )
+    except PlanningRecordNotFoundError as exc:
+        session.rollback()
+        raise HTTPException(404, "No encontramos el movimiento o la cuenta.") from exc
+    except ConfirmationConflictError as exc:
+        session.rollback()
+        raise HTTPException(
+            409, "El movimiento ya se confirmó con otra opción o cuenta."
+        ) from exc
+    except ValueError as exc:
+        session.rollback()
+        raise HTTPException(422, str(exc)) from exc
+    response = IncomeResponse if is_income else CommitmentResponse
+    return response.model_validate(record)
+
+
+@router.post("/income/{record_id}/confirm", response_model=IncomeResponse)
+def confirm_income(
+    record_id: UUID,
+    request: ConfirmationRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_database_session)],
+) -> IncomeResponse | CommitmentResponse:
+    return _confirm(session, current_user, record_id, request, is_income=True)
+
+
+@router.post("/commitments/{record_id}/confirm", response_model=CommitmentResponse)
+def confirm_commitment(
+    record_id: UUID,
+    request: ConfirmationRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_database_session)],
+) -> IncomeResponse | CommitmentResponse:
+    return _confirm(session, current_user, record_id, request, is_income=False)
 
 
 def query_month(

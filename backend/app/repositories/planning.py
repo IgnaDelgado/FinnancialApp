@@ -1,5 +1,6 @@
 from collections.abc import Iterable
 from datetime import date
+from typing import cast
 from uuid import UUID, uuid4
 
 from sqlalchemy import false, or_, select
@@ -12,6 +13,20 @@ from app.models.planning import MonthlyPlan, PlannedCommitment, PlannedIncome
 class PlanningRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
+
+    def lock_record(
+        self, user_id: UUID, record_id: UUID, *, is_income: bool
+    ) -> PlannedIncome | PlannedCommitment | None:
+        model = PlannedIncome if is_income else PlannedCommitment
+        return cast(
+            PlannedIncome | PlannedCommitment | None,
+            self._session.scalar(
+                select(model)
+                .where(model.id == record_id, model.user_id == user_id)
+                .with_for_update()
+                .execution_options(populate_existing=True)
+            ),
+        )
 
     def add_income(self, income: PlannedIncome) -> None:
         self._session.add(income)

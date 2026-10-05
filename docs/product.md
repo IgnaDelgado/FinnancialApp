@@ -60,8 +60,10 @@ positive ARS/USD amount, and valid past, present, or future calendar date.
 The selected month and all older pending records remain accessible, with overdue
 labels and independent pagination. Creation does not change accounts or their
 history. Monthly plans start on the chosen first date and use the last day of
-a month when the original day does not exist. Received/paid transitions,
-modifications, stopping repetitions, installments,
+a month when the original day does not exist. Full received/paid confirmation
+now selects an account and either updates its balance or marks the movement as
+already included. Identical retries do not apply it twice. Modifications,
+stopping repetitions, installments,
 and flexible budgets remain future work. M2 and M3 are still partial.
 
 Users record one-time or monthly income with an expected date and a status of `PLANNED`, `RECEIVED`, or `CANCELLED`. Only `PLANNED` income dated from today through month end qualifies for the month-end forecast. Overdue planned income is excluded and generates a warning. Expected income is never treated as received money.
@@ -80,12 +82,14 @@ categories, goals or next month's planned amount. The user may explicitly adjust
 a future plan. These requirements were approved on 2026-10-05 and are not yet
 implemented; aggregation and reconciliation rules remain pending.
 
-Income and payments will be associated with accounts. Explicit confirmation
-will update the selected account balance once, in the same currency. Scheduled
+Income and payments are associated with an account on full confirmation.
+Explicit confirmation updates the selected account balance once, in the same
+currency, or records that the movement is already included without changing it.
+Scheduled
 recurring dates will request confirmation through configurable reminders;
-reaching the date alone does not change real money. Confirmation and reminders
-are not currently delivered. Reconciliation with manually updated balances and
-notification delivery details must be resolved before implementation.
+reaching the date alone does not change real money. Reminders and preferred
+accounts on recurring templates remain future work. The confirmation slice does
+not support partial amounts, backdated actual dates or undo/corrections.
 
 ### Goals and allocations
 
@@ -199,5 +203,6 @@ uses everyday wording in place of liquidity jargon. No existing records are
 migrated or deleted by the redesign.
 
 Full available-money and goal effects remain the product destination. Before
-regular use beyond testing, status transitions and stopping/editing repeats
-must be completed so past paid obligations do not remain pending indefinitely.
+regular use beyond testing, stopping/editing repeats and confirmation corrections
+remain to be completed. Full confirmation now removes received/paid occurrences
+from pending calculations without duplicating recorded cash.

@@ -95,7 +95,9 @@ even under concurrent requests. Mobile includes month navigation.
 Amounts must be positive; past, present, and future dates are accepted.
 The current financial month and all older pending records remain accessible
 without changing account balances or history. There are no available-money,
-savings, or projection calculations. M3 remains incomplete: status transitions,
+savings, or full availability calculations. Full account-linked received/paid
+confirmation is now delivered, with explicit reconciliation and retry protection.
+M3 remains incomplete: cancellations, corrections,
 editing/rescheduling/deletion, stopping repetitions, installments, partial payments,
 flexible budgets, and aggregate spending are not delivered. Remaining M2 work
 does not block this independent planning slice and is unchanged.
@@ -266,9 +268,9 @@ No provider, API, or integration is selected or available yet. WhatsApp is the f
 ## Immediate product usability priorities (2026-10-01)
 
 The new home snapshot and expense preview provide an understandable entry into
-planning, without claiming that M5 or M7 is complete. Next: finish received/paid
-status transitions, reconciliation with recorded balances, and stopping/editing
-monthly plans. Then approve and implement flexible-budget and goal-allocation
+planning, without claiming that M5 or M7 is complete. Full received/paid
+confirmation and explicit reconciliation are now delivered. Next: stopping/editing
+monthly plans and confirmation corrections. Then approve and implement flexible-budget and goal-allocation
 rules so the primary result can become the complete safe-to-spend value.
 Empty goals/investment tabs stay hidden until those capabilities are usable.
 
@@ -278,11 +280,13 @@ Approved product direction: associate income/payments with accounts, request
 confirmation on recurring dates through configurable reminders, and update the
 selected account once on confirmation. Budget categories show planned spending,
 actual spending, remaining amounts, excess and default accounts. The approved
-excess rule is specified in financial-rules.md; this update delivers specification
-only, not account-changing confirmation, budgets or notifications.
+excess rule is specified in financial-rules.md. Full confirmation now delivers
+account selection, balance updates or the already-included option, atomic history
+and safe retries for both one-time and monthly occurrences. Budgets and
+notifications remain unimplemented.
 
-Deliver small, verified slices: first settle reconciliation with recorded
-balances and retry/correction semantics; then implement account-linked
-confirmation, budget planning and confirmed spending; finally implement reminders
+Next small slices: settle correction semantics, category aggregation and combined
+spending reconciliation; implement budget planning and confirmed spending;
+finally implement reminders
 after their delivery/configuration requirements are settled. Resolve category
 aggregation and combined aggregate/individual spending before their calculation.

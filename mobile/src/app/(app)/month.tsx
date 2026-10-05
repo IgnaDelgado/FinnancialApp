@@ -31,11 +31,11 @@ export default function MonthScreen() {
           <Pressable accessibilityRole="button" accessibilityLabel="Mes siguiente" disabled={period === '9999-12'} style={styles.button} onPress={() => setMonthOffset((value) => value + 1)}><Text style={styles.buttonText}>Siguiente ›</Text></Pressable>
         </View>
         <Text style={styles.help}>Anotá los pagos importantes y lo que esperás cobrar. Los mensuales se repiten solos.</Text>
-        <Text style={styles.help}>No hace falta registrar cada compra. Estos planes no cambian tus saldos.</Text>
+        <Text style={styles.help}>Los planes no cambian tus saldos hasta que confirmás un cobro o pago. Si ya estaba incluido, podés confirmarlo sin cambiar el saldo.</Text>
       </View>
       <View style={styles.navigation}>{([{ value: 'commitments', label: 'Lo que pago' }, { value: 'income', label: 'Lo que cobro' }] as const).map((option) => <Pressable key={option.value} accessibilityRole="button" accessibilityState={{ selected: kind === option.value }} style={[styles.button, kind === option.value && styles.selected]} onPress={() => setKind(option.value)}><Text style={styles.buttonText}>{option.label}</Text></Pressable>)}</View>
       <PlanningSection key={`${kind}-${year}-${month}`} kind={kind} today={today} period={period} />
-      <Text style={styles.help}>En esta versión los registros quedan pendientes. Marcar pagos o cobros, editar y detener repeticiones todavía no está disponible.</Text>
+      <Text style={styles.help}>Confirmá cuando ocurra el cobro o pago. Editar, deshacer confirmaciones y detener repeticiones todavía no está disponible.</Text>
     </ScrollView>
   </SafeAreaView>;
 }

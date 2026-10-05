@@ -87,6 +87,9 @@ async function readResponseBody(response: Response): Promise<unknown> {
 }
 
 function errorMessageFor(status: number, body: unknown, path: string): string {
+  if (path.endsWith('/confirm') && (status === 404 || status === 409 || status === 422)) {
+    return readDetail(body) ?? 'Revisá la cuenta y la opción de confirmación.';
+  }
   if (status === 404 && (path.startsWith('/api/v1/home') || path.startsWith('/api/v1/income') || path.startsWith('/api/v1/commitments'))) {
     return 'El servidor no tiene habilitada esta función. Actualizá el backend y volvé a intentar.';
   }

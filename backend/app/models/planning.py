@@ -3,6 +3,7 @@ from decimal import Decimal
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Date,
     DateTime,
@@ -61,7 +62,16 @@ class PlannedIncome(Base):
         CheckConstraint(
             "length(trim(description)) > 0", name="ck_planned_income_description"
         ),
-        CheckConstraint("status = 'PLANNED'", name="ck_planned_income_status"),
+        CheckConstraint(
+            "status IN ('PLANNED', 'RECEIVED')", name="ck_planned_income_status"
+        ),
+        CheckConstraint(
+            "(status = 'PLANNED' AND account_id IS NULL AND confirmed_at IS NULL "
+            "AND already_in_balance IS NULL) OR (status = 'RECEIVED' "
+            "AND account_id IS NOT NULL AND confirmed_at IS NOT NULL "
+            "AND already_in_balance IS NOT NULL)",
+            name="ck_planned_income_confirmation",
+        ),
         CheckConstraint(
             "recurrence IN ('ONE_TIME', 'MONTHLY')", name="ck_planned_income_recurrence"
         ),
@@ -91,7 +101,10 @@ class PlannedIncome(Base):
         )
     )
     expected_date: Mapped[date] = mapped_column(Date)
-    status: Mapped[str] = mapped_column(String(7), default="PLANNED")
+    status: Mapped[str] = mapped_column(String(8), default="PLANNED")
+    account_id: Mapped[UUID | None] = mapped_column(ForeignKey("financial_accounts.id"))
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    already_in_balance: Mapped[bool | None] = mapped_column(Boolean)
     recurrence: Mapped[str] = mapped_column(String(8), default="ONE_TIME")
     template_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("monthly_plans.id", ondelete="CASCADE")
@@ -109,7 +122,16 @@ class PlannedCommitment(Base):
         CheckConstraint(
             "length(trim(description)) > 0", name="ck_planned_commitments_description"
         ),
-        CheckConstraint("status = 'PLANNED'", name="ck_planned_commitments_status"),
+        CheckConstraint(
+            "status IN ('PLANNED', 'PAID')", name="ck_planned_commitments_status"
+        ),
+        CheckConstraint(
+            "(status = 'PLANNED' AND account_id IS NULL AND confirmed_at IS NULL "
+            "AND already_in_balance IS NULL) OR (status = 'PAID' "
+            "AND account_id IS NOT NULL AND confirmed_at IS NOT NULL "
+            "AND already_in_balance IS NOT NULL)",
+            name="ck_planned_commitments_confirmation",
+        ),
         CheckConstraint(
             "recurrence IN ('ONE_TIME', 'MONTHLY')",
             name="ck_planned_commitments_recurrence",
@@ -143,6 +165,9 @@ class PlannedCommitment(Base):
     )
     due_date: Mapped[date] = mapped_column(Date)
     status: Mapped[str] = mapped_column(String(7), default="PLANNED")
+    account_id: Mapped[UUID | None] = mapped_column(ForeignKey("financial_accounts.id"))
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    already_in_balance: Mapped[bool | None] = mapped_column(Boolean)
     recurrence: Mapped[str] = mapped_column(String(8), default="ONE_TIME")
     template_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("monthly_plans.id", ondelete="CASCADE")

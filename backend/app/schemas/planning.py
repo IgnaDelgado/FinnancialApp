@@ -68,13 +68,24 @@ class PlannedResponse(BaseModel):
     currency: Currency
     recurrence: Literal["ONE_TIME", "MONTHLY"]
     template_id: UUID | None
-    status: Literal["PLANNED"]
+    account_id: UUID | None
+    confirmed_at: datetime | None
+    already_in_balance: bool | None
     created_at: datetime
 
 
 class IncomeResponse(PlannedResponse):
+    status: Literal["PLANNED", "RECEIVED"]
     expected_date: date
 
 
 class CommitmentResponse(PlannedResponse):
+    status: Literal["PLANNED", "PAID"]
     due_date: date
+
+
+class ConfirmationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    account_id: UUID
+    already_in_balance: bool = Field(strict=True)

@@ -47,12 +47,18 @@ class FinancialAccountRepository:
             for currency, balance in self._session.execute(statement)
         ]
 
-    def get_active(self, user_id: UUID, account_id: UUID) -> FinancialAccount | None:
+    def get_active(
+        self, user_id: UUID, account_id: UUID, *, lock: bool = False
+    ) -> FinancialAccount | None:
         statement = select(FinancialAccount).where(
             FinancialAccount.id == account_id,
             FinancialAccount.user_id == user_id,
             FinancialAccount.archived_at.is_(None),
         )
+        if lock:
+            statement = statement.with_for_update().execution_options(
+                populate_existing=True
+            )
         return self._session.scalar(statement)
 
     def list_snapshots(

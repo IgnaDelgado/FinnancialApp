@@ -155,7 +155,8 @@ combined. No account balances or snapshots change.
 Tu mes navigates past, current and future months, keeping its pages of 20 and
 older pending records. Its DD/MM/YYYY input is normalized to ISO at the API.
 Templates are immutable in this extension. Editing, stopping/cancelling repeats,
-status transitions, payment history and availability calculations remain pending.
+partial-payment history and full availability calculations remain pending.
+Full received/paid transitions are delivered by the confirmation slice below.
 A manually retried POST after an ambiguous network failure can create another
 template; users should refresh the list before retrying.
 
@@ -214,12 +215,45 @@ leaves actual cash of 380,000.00, a remaining budget of 0.00, and an excess of
 deduct that 120,000.00 again or add back 20,000.00 by subtracting a negative
 remaining budget. The next month's unchanged plan remains 100,000.00.
 
-These are approved requirements, not delivered functionality. Before implementing
-account-changing confirmation, resolve reconciliation when the recorded balance
-already includes the movement, confirmation retries/concurrency, actual versus
-planned amount/date, reversals/corrections, and partial-payment history. Combining
+Budget spending and reminders remain approved requirements, not delivered
+functionality. Full account-linked confirmation is delivered as specified below;
+reversals/corrections and partial-payment history remain pending. Combining
 aggregate spending entry with individual expenses must prevent double counting;
 its reconciliation policy and category aggregation remain **Pending decision**.
+
+### Full income/payment confirmation and reconciliation (2026-10-05)
+
+The user explicitly selects an active owned account in the record's currency and
+one of two options. `already_in_balance=false` applies the full planned amount
+to current account cash (add income, subtract payment) and appends one balance
+snapshot with a UTC timestamp. `already_in_balance=true` means the user confirms
+that their recorded balance already includes this movement: status changes but
+balance, balance-update timestamp and snapshot history stay unchanged. Neither
+option changes the original amount, financial date, or recurrence template.
+
+The first slice supports full confirmation only: `PLANNED` to `RECEIVED` for
+income and `PLANNED` to `PAID` for commitments. Each occurrence stores the chosen
+account, reconciliation option and UTC confirmation timestamp. That timestamp
+records when the user confirmed; it is not a user-entered actual receipt/payment
+date. A future planned date does not block explicit confirmation when the movement
+has actually occurred. Different actual amounts, backdated actual dates, partial
+payments, cancellations and undo/corrections are not supported in this slice.
+
+Confirmation and any balance change/snapshot commit atomically. Record and account
+writes are serialized so concurrent confirmations do not duplicate a movement
+or lose independent movements. An identical retry returns the existing result
+without another balance change/snapshot, including after account archival.
+A retry with a different account or reconciliation option returns a conflict.
+New confirmations reject archived accounts and currency mismatch. Signed balances
+remain permitted; an arithmetic result outside `NUMERIC(20,2)` is rejected without
+changing state. No rounding or conversion occurs.
+
+Month consultation retains completed records in their planned month, but does not
+carry them as overdue pending records into later months. Confirmed income is no
+longer forecast; paid commitments are no longer deducted as pending. Monthly
+generation keeps completed occurrences and leaves later occurrences planned.
+The mobile flow chooses an account at confirmation; saving a preferred account
+on a recurring template and configurable notifications remain future work.
 
 ## Goals and Goal Progress
 
@@ -302,7 +336,7 @@ balances are disclosed separately as a signed total, not silently netted out.
 
 `forecast_after_bills` adds only PLANNED income dated from financial today through
 month end. Older pending income is excluded and counted in a warning. Income is
-never included in current cash. Both results may be negative. These values omit
+not included in current cash until confirmed as received. Both results may be negative. These values omit
 flexible spending, goal allocations and goal contributions and must never be
 labelled safe-to-spend. The interface states these omissions beside the result.
 There is no consolidation across currencies, return assumption or rounding of
