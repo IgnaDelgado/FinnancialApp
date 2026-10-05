@@ -83,7 +83,7 @@ class UserDataRepository:
                     func.jsonb_build_object(*pairs).label("record"),
                 ).where(owned)
             )
-        rows = self._session.execute(union_all(*statements)).all()
+        rows = self._session.execute(union_all(*statements))
         result: dict[str, object] = {
             "schema_version": 1,
             "exported_at": datetime.now(UTC).isoformat(),

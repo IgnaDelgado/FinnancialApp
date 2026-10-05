@@ -16,7 +16,7 @@ Expo SDK 57 and React Native client for authentication and manual financial acco
 - Account creation and balance updates, including negative balances.
 - Bottom navigation exposes Inicio, Movimientos and Perfil. Account management is
   available from home; unfinished goal/investment tabs are hidden.
-- Accounts shows a five-account preview, pages of 50 for management, and per-currency totals across all active accounts. Profile holds user details and logout separately.
+- Account management shows pages of 50 and per-currency totals across all active accounts. Profile holds user details and logout separately.
 - Tu mes creates one-time or monthly planned income and commitments with description,
   positive ARS/USD amount, and financial date. It includes month navigation and shows the selected month and
   all older pending records in separate lists with pages of 20, overdue labels,
@@ -27,16 +27,19 @@ Expo SDK 57 and React Native client for authentication and manual financial acco
 - Registering an expected event does not change account balances or snapshots.
   Movimientos now confirms full received income or paid commitments, selecting a
   same-currency account and either updating its balance or marking the movement
-  as already included. Safe retries prevent duplicate movements. Confirmations
-  cannot be undone in this slice; record modifications remain future work.
+  as already included. Safe retries prevent duplicate movements. Confirmation
+  corrections preserve audit history and apply the inverse movement to current
+  cash when needed. Monthly plans support future amount/day changes and stopping
+  repetition; partial payments and arbitrary one-time edits remain future work.
 - Movimientos keeps pending cards visible and completed records collapsed in
   page history. Creation and confirmation open separate sheets. Creation saves
   an account and derives currency from it; monthly occurrences inherit that
   account. Existing monthly records can remember their account on confirmation.
 - Inicio shows cash after pending bills, a separate forecast, setup guidance and
   an exact-cent additional-expense preview. This is not full safe-to-spend money.
+- Profile supports complete JSON export and password-confirmed account deletion.
 
-Budgets, goals, investments, net worth, and safe-to-spend calculations belong to later roadmap milestones. The Accounts tab shows only recorded account cash and labels it separately from those future calculations.
+Budgets, goals, investments, net worth, and safe-to-spend calculations belong to later roadmap milestones. Account management shows only recorded account cash and labels it separately from those future calculations.
 
 ## Configure the backend URL
 

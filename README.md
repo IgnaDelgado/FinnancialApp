@@ -19,7 +19,7 @@ The first M2 slice is implemented: users can create supported manual accounts,
 record signed ARS/USD balances (including overdrafts), update the full balance,
 and see per-currency totals. Each balance change creates a historical snapshot.
 The API enforces ownership, supports account archival, and paginates active
-accounts and balance history. The mobile home previews five accounts; account
+accounts and balance history. The account
 management displays pages of 50. Totals include every active account, not just
 the visible page, and are not net worth or safe-to-spend money. Goals
 and Investments remain clearly marked as coming soon.
@@ -46,7 +46,7 @@ and budgets remain future work, as do M4–M9. Profile supports complete JSON
 export and password-confirmed account/data deletion. The
 remaining M2 tasks and milestone order are tracked in
 [the roadmap](docs/roadmap.md). Email verification, password recovery, abuse
-protection, account security controls, and user-controlled data export/deletion
+protection, account security controls, and operational deletion-retention policies
 are tracked separately in the
 [pre-beta checklist](docs/roadmap.md#pre-beta-authentication-and-account-checklist).
 

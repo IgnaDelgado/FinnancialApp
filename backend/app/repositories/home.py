@@ -55,7 +55,7 @@ class HomeRepository:
             PlannedIncome.status == "PLANNED",
             PlannedIncome.expected_date <= month_end,
         )
-        rows = self._session.execute(union_all(accounts, bills, income)).all()
+        rows = self._session.execute(union_all(accounts, bills, income))
         account_values: list[tuple[Currency, Decimal, bool]] = []
         bill_values: list[tuple[Currency, Decimal, date]] = []
         income_values: list[tuple[Currency, Decimal, date]] = []

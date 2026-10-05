@@ -104,11 +104,18 @@ class PlanningRepository:
             statement = statement.where(MonthlyPlan.kind == kind)
         return list(self._session.scalars(statement).all())
 
-    def insert_occurrences(self, plan: MonthlyPlan, dates: Iterable[date]) -> None:
+    def insert_occurrences(
+        self,
+        plan: MonthlyPlan,
+        dates: Iterable[date],
+        *,
+        changes: list[tuple[date, Decimal, int]] | None = None,
+    ) -> None:
         table = PlannedIncome if plan.kind == "income" else PlannedCommitment
         date_field = "expected_date" if plan.kind == "income" else "due_date"
         batch: list[dict[str, object]] = []
-        changes = self.monthly_changes(plan.id)
+        if changes is None:
+            changes = self.monthly_changes(plan.id)
         for occurrence in dates:
             if (
                 plan.stopped_from is not None
@@ -153,19 +160,28 @@ class PlanningRepository:
             )
 
     def monthly_changes(self, template_id: UUID) -> list[tuple[date, Decimal, int]]:
-        return list(
-            self._session.execute(
-                select(
-                    MonthlyPlanChange.effective_period,
-                    MonthlyPlanChange.amount,
-                    MonthlyPlanChange.day,
-                )
-                .where(MonthlyPlanChange.template_id == template_id)
-                .order_by(MonthlyPlanChange.effective_period, MonthlyPlanChange.id)
+        return self.monthly_changes_for_plans([template_id]).get(template_id, [])
+
+    def monthly_changes_for_plans(
+        self, template_ids: Iterable[UUID]
+    ) -> dict[UUID, list[tuple[date, Decimal, int]]]:
+        ids = list(template_ids)
+        if not ids:
+            return {}
+        rows = self._session.execute(
+            select(
+                MonthlyPlanChange.template_id,
+                MonthlyPlanChange.effective_period,
+                MonthlyPlanChange.amount,
+                MonthlyPlanChange.day,
             )
-            .tuples()
-            .all()
+            .where(MonthlyPlanChange.template_id.in_(ids))
+            .order_by(MonthlyPlanChange.effective_period, MonthlyPlanChange.id)
         )
+        changes: dict[UUID, list[tuple[date, Decimal, int]]] = {}
+        for template_id, period, amount, day in rows:
+            changes.setdefault(template_id, []).append((period, amount, day))
+        return changes
 
     def list_income(
         self,

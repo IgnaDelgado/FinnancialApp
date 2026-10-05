@@ -1,9 +1,11 @@
 import type { PlanningInput, PlanningKind, PlanningRecord } from './api.ts';
 
+const financialDateFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/Argentina/Cordoba', year: 'numeric', month: '2-digit', day: '2-digit',
+});
+
 export function financialDate(now = new Date()): string {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Argentina/Cordoba', year: 'numeric', month: '2-digit', day: '2-digit',
-  }).formatToParts(now);
+  const parts = financialDateFormatter.formatToParts(now);
   const part = (name: string) => parts.find((value) => value.type === name)!.value;
   return `${part('year')}-${part('month')}-${part('day')}`;
 }

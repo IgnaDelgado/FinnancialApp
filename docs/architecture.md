@@ -231,6 +231,11 @@ requested future months do not advance it. Calendar generation is pure domain
 code. No scheduler, queue or new dependency is required. GET consultation can
 materialize planned instances, but never modifies recorded account cash.
 
+After acquiring template locks, generation reads effective versions for all
+selected plans in one query and reuses them for catch-up and future previews.
+An already-covered month does not query versions. Version ordering remains by
+effective month and ID, preserving later edits within the same effective month.
+
 Local Docker startup applies Alembic migrations before Uvicorn starts. Code
 changes still require rebuilding the backend image; missing planning routes on
 an old image return 404. The mobile client translates that specific failure into

@@ -1,6 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from decimal import Decimal
+from typing import cast
+from unittest.mock import patch
 from uuid import UUID, uuid4
 
 import pytest
@@ -12,12 +14,95 @@ from app.core.database import get_engine
 from app.domain.currency import Currency
 from app.domain.planning import monthly_dates
 from app.models.planning import MonthlyPlan, PlannedCommitment, PlannedIncome
+from app.models.planning_maintenance import MonthlyPlanChange
 from app.models.user import User
 from app.repositories.planning import PlanningRepository
 from app.services.planning import PlanningService
 from tests.test_financial_accounts_api import _create_account, _headers
 
 RESOURCES = [("income", "expected_date"), ("commitments", "due_date")]
+
+
+@pytest.mark.parametrize(("resource", "date_field"), RESOURCES)
+@pytest.mark.parametrize("plan_count", [1, 4])
+def test_generation_reads_versions_once_and_preserves_each_plans_terms(
+    api_client: TestClient,
+    database_session: Session,
+    monkeypatch: pytest.MonkeyPatch,
+    resource: str,
+    date_field: str,
+    plan_count: int,
+) -> None:
+    monkeypatch.setattr(
+        "app.services.planning.financial_today", lambda: date(2026, 3, 15)
+    )
+    headers = _headers(database_session, "batched-versions@example.com")
+    user = database_session.scalar(
+        select(User).where(User.email == "batched-versions@example.com")
+    )
+    assert user is not None
+    for index in range(plan_count):
+        response = api_client.post(
+            f"/api/v1/{resource}",
+            headers=headers,
+            json={
+                "description": f"Synthetic {index}",
+                "amount": "1.01",
+                "currency": "ARS",
+                date_field: "2026-01-31",
+                "recurrence": "MONTHLY",
+            },
+        )
+        assert response.status_code == 201
+        if index == 0:
+            continue  # A plan without versions still uses its original terms.
+        for amount in ("2.02", "3.03"):
+            database_session.add(
+                MonthlyPlanChange(
+                    template_id=UUID(response.json()["template_id"]),
+                    effective_period=date(2026, 2, 1),
+                    amount=Decimal(amount),
+                    day=28,
+                )
+            )
+    database_session.flush()
+    service = PlanningService(database_session)
+    with patch.object(
+        database_session, "execute", wraps=database_session.execute
+    ) as executed:
+        # Exercise catch-up AND future preview: neither may reread the versions.
+        service.ensure_monthly_records(
+            user.id, resource, date(2026, 4, 1), date(2026, 4, 30)
+        )
+    version_reads = [
+        call
+        for call in executed.call_args_list
+        if "FROM monthly_plan_changes" in str(call.args[0])
+    ]
+    assert len(version_reads) == 1
+    model = PlannedIncome if resource == "income" else PlannedCommitment
+    entries = database_session.scalars(
+        select(model).where(model.user_id == user.id)
+    ).all()
+    assert len(entries) == plan_count * 4
+    for entry in entries:
+        entry = cast(PlannedIncome | PlannedCommitment, entry)
+        day = getattr(entry, date_field)
+        changed = entry.description != "Synthetic 0" and day.month >= 2
+        assert entry.amount == Decimal("3.03" if changed else "1.01")
+        assert day.day == (
+            28 if changed or day.month == 2 else 31 if day.month != 4 else 30
+        )
+    with patch.object(
+        database_session, "execute", wraps=database_session.execute
+    ) as executed:
+        service.ensure_monthly_records(
+            user.id, resource, date(2026, 3, 1), date(2026, 3, 31)
+        )
+    assert not any(
+        "FROM monthly_plan_changes" in str(call.args[0])
+        for call in executed.call_args_list
+    )
 
 
 @pytest.mark.parametrize(
